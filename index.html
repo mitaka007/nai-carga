@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Nai Carga</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f172a">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2"></script>
+<style>
+:root{--bg:#0f172a;--card:#1e293b;--card2:#334155;--acc:#0ea5e9;--text:#f1f5f9;--muted:#94a3b8;
+  --ok:#22c55e;--warn:#f59e0b;--danger:#ef4444}
+*{box-sizing:border-box}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);margin:0 auto;padding:14px;max-width:640px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+h2{margin:4px 0 12px;font-size:1.1em}
+.status{font-size:.78em;padding:4px 10px;border-radius:20px;background:var(--card2)}
+.status.on{background:var(--ok);color:#06240f}
+.btn{width:100%;padding:15px;border:none;border-radius:12px;font-weight:700;font-size:1em;cursor:pointer;margin:6px 0;color:#fff}
+.btn.p{background:var(--acc)} .btn.s{background:var(--card2)} .btn.d{background:var(--danger)} .btn.ok{background:#15803d}
+.btn:disabled{opacity:.45}
+.card{background:var(--card);border-radius:14px;padding:12px;margin:10px 0}
+.lbl{font-size:.72em;color:var(--muted);margin:2px 0 4px}
+.hint{font-size:.78em;color:var(--muted);margin:4px 2px 10px}
+.msg{font-size:.85em;color:var(--muted);margin:6px 2px;min-height:1.2em}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;min-width:30%;padding:9px 6px;border:2px solid var(--card2);border-radius:10px;background:transparent;color:#fff;font-weight:700;cursor:pointer;font-size:.85em}
+.seg button small{display:block;font-weight:400;font-size:.78em;color:var(--muted)}
+.seg button.on{background:var(--acc);border-color:var(--acc)} .seg button.on small{color:#e0f2fe}
+.campos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.campos label{font-size:.75em;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+.campos input,select{background:var(--card2);border:none;border-radius:8px;color:#fff;padding:9px;font-size:1em;width:100%}
+.campos input:disabled{opacity:.4}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:.85em;margin:10px 0 0}
+.chk input{margin-top:3px}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0}
+.tile{background:var(--card2);border-radius:12px;padding:10px;text-align:center}
+.tile .v{display:block;font-size:1.15em;font-weight:700}
+.tile .l{font-size:.62em;color:var(--muted);text-transform:uppercase}
+.temp{font-size:2.4em;font-weight:800;text-align:center;margin:4px 0}
+.estado{text-align:center;font-weight:700;border-radius:10px;padding:8px;margin:6px 0}
+.n0{background:#14532d;color:#bbf7d0} .n1{background:var(--warn);color:#3b2a00} .n2{background:var(--danger);color:#fff} .nx{background:var(--card2);color:var(--muted)}
+.scroll{max-height:260px;overflow-y:auto;-webkit-overflow-scrolling:touch;border-radius:10px}
+.via{display:flex;justify-content:space-between;gap:8px;padding:10px;border-radius:10px;background:var(--card2);margin:6px 0;font-size:.85em;cursor:pointer}
+.via.sel{outline:2px solid var(--acc)} .via small{color:var(--muted)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+table{width:100%;border-collapse:collapse;font-size:.8em}
+th,td{padding:6px 8px;text-align:left;border-bottom:1px solid #283548;vertical-align:top}
+th{position:sticky;top:0;background:var(--card2);color:var(--muted);font-weight:600}
+.mini{padding:6px 12px;border:none;border-radius:8px;background:var(--card2);color:#fff;font-size:.78em;cursor:pointer}
+.ch{position:relative;height:190px}
+.ch canvas{touch-action:pan-y}
+.res{font-size:.86em;line-height:1.6}
+.res .k{color:var(--muted)}
+.legal{font-size:.74em;color:var(--muted);line-height:1.45}
+.legal b{color:var(--text)} .legal p{margin:6px 0}
+.legal summary{cursor:pointer;color:var(--text);font-weight:600;font-size:1.1em;padding:2px 0}
+a{color:#7dd3fc}
+</style>
+</head>
+<body>
+
+<div class="row">
+  <h2>Nai Carga <small style="color:#94a3b8;font-weight:400">V1.1</small></h2>
+  <span><span id="bat" class="status" style="display:none;margin-right:6px"></span><span id="st" class="status">Desconectado</span></span>
+</div>
+<div class="row" id="apRow" style="display:none;margin:0 2px 8px">
+  <span class="lbl" style="margin:0">Aparato: <b id="apNom" style="color:#fff"></b> <span id="apId"></span></span>
+  <button class="mini" onclick="renombrar()">Cambiar nombre</button>
+</div>
+<button class="btn p" id="btnConn" onclick="conectarODesconectar()">CONECTAR APARATO</button>
+<div class="hint">El aparato siempre está visible (baliza cada 2 s). La primera vez el móvil pedirá el PIN.</div>
+
+<!-- Estado en vivo -->
+<div class="card" id="estadoCard" style="display:none">
+  <div class="row"><span class="lbl">Estado ahora <span id="esFuente"></span></span><button class="mini" id="btnBaliza" onclick="vigilarBaliza()">Vigilar sin conectar</button></div>
+  <div class="temp" id="esTemp">—</div>
+  <div class="estado nx" id="esNivel">Sin viaje en marcha</div>
+  <div class="grid" style="margin-bottom:0">
+    <div class="tile"><span class="v" id="esFuera">—</span><span class="l">Fuera de rango</span></div>
+    <div class="tile"><span class="v" id="esEv">—</span><span class="l">Eventos</span></div>
+    <div class="tile"><span class="v" id="esIncl">—</span><span class="l">Inclinación</span></div>
+  </div>
+  <div class="lbl" id="esDet" style="margin-top:8px"></div>
+</div>
+
+<!-- Nuevo viaje -->
+<div class="card" id="viajeCard">
+  <div class="lbl">Perfil de temperatura del viaje</div>
+  <div class="seg" id="perfiles">
+    <button data-p="1" onclick="elegirPerfil(1)">Congelado<small>≤ −18 °C</small></button>
+    <button data-p="2" onclick="elegirPerfil(2)">Refrigerado<small>2 a 8 °C</small></button>
+    <button data-p="3" onclick="elegirPerfil(3)">Ambiente<small>15 a 25 °C</small></button>
+    <button data-p="4" onclick="elegirPerfil(4)">Personalizado<small>tus límites</small></button>
+    <button data-p="0" onclick="elegirPerfil(0)">Sin temperatura<small>solo golpes</small></button>
+  </div>
+  <div class="campos">
+    <label>Rango: mínimo (°C)<input id="fMin" type="number" step="0.5" inputmode="decimal" oninput="editado()"></label>
+    <label>Rango: máximo (°C)<input id="fMax" type="number" step="0.5" inputmode="decimal" oninput="editado()"></label>
+    <label>Aviso si sale del rango más de (min)<input id="fRet" type="number" min="0" max="255" inputmode="numeric" oninput="editado()"></label>
+    <label>Crítica si en total pasa fuera (min, 0 = no)<input id="fAcu" type="number" min="0" max="255" inputmode="numeric" oninput="editado()"></label>
+    <label>Crítica por debajo de (°C)<input id="fCMin" type="number" step="0.5" inputmode="decimal" oninput="editado()"></label>
+    <label>Crítica por encima de (°C)<input id="fCMax" type="number" step="0.5" inputmode="decimal" oninput="editado()"></label>
+  </div>
+  <div class="hint" id="perfilTxt" style="margin-top:8px"></div>
+  <div class="lbl" style="margin-top:10px">Qué tan delicado es el paquete</div>
+  <div class="seg" id="frags">
+    <button data-f="0" onclick="elegir('frag',0)">Frágil<small>golpe ≥ 1,5 g</small></button>
+    <button data-f="1" onclick="elegir('frag',1)">Normal<small>golpe ≥ 2,5 g</small></button>
+    <button data-f="2" onclick="elegir('frag',2)">Robusto<small>golpe ≥ 4 g</small></button>
+  </div>
+  <div class="lbl" style="margin-top:10px">Vehículo (umbral de maniobra brusca)</div>
+  <div class="seg" id="vehs">
+    <button data-v="20" onclick="elegir('thrM',20)">Camión<small>0,20 g</small></button>
+    <button data-v="30" onclick="elegir('thrM',30)">Furgoneta<small>0,30 g</small></button>
+    <button data-v="40" onclick="elegir('thrM',40)">Coche<small>0,40 g</small></button>
+  </div>
+  <div class="campos">
+    <label>Registro de temperatura cada
+      <select id="fInt" onchange="elegir('int10',+this.value)">
+        <option value="3">30 s</option><option value="6">1 min</option><option value="12">2 min</option><option value="30">5 min</option>
+      </select></label>
+    <span></span>
+  </div>
+  <label class="chk"><input type="checkbox" id="fFlecha" onchange="elegir('flecha',this.checked?1:0)">
+    <span>La flecha del aparato (eje X del acelerómetro) mira hacia la parte delantera del vehículo. Así distingue frenadas, acelerones y curvas. Si no, la app intenta deducir la dirección de la marcha.</span></label>
+  <label class="chk"><input type="checkbox" id="fGps" onchange="elegir('gps',this.checked?1:0)">
+    <span>Guardar el GPS del móvil durante el viaje (velocidad y lugar de cada evento). Solo funciona con la app abierta y la pantalla encendida.</span></label>
+  <button class="btn ok" id="btnIni" onclick="iniciarViaje()" style="margin-top:12px">INICIAR VIAJE</button>
+  <button class="btn s" id="btnFin" onclick="terminarViaje()">Terminar viaje</button>
+  <div class="hint">Al iniciar, deja el aparato quieto 3 segundos en su posición de transporte: calibra hacia dónde está "abajo".</div>
+</div>
+
+<div class="row">
+  <button class="btn s" onclick="descargar()" style="flex:2">Descargar datos</button>
+  <button class="btn s" onclick="exportCSV()" style="flex:1">CSV</button>
+  <button class="btn s" onclick="informe()" style="flex:1">Informe</button>
+</div>
+<button class="btn d" onclick="borrar()">Borrar memoria del aparato</button>
+<button class="btn s" style="margin-top:8px" onclick="borrarHistorialMovil()">Borrar historial del móvil (este aparato)</button>
+<div id="msg" class="msg"></div>
+
+<div class="card">
+  <div class="lbl">Viajes (toca uno para verlo)</div>
+  <div id="viajes" class="scroll"><div class="hint">Sin datos todavía.</div></div>
+</div>
+
+<div class="card" id="detalle" style="display:none">
+  <div class="estado nx" id="dNivel"></div>
+  <div class="res" id="dRes"></div>
+  <div class="grid">
+    <div class="tile"><span class="v" id="dPunt">—</span><span class="l">Conducción /100</span></div>
+    <div class="tile"><span class="v" id="dMan">0</span><span class="l">Maniobras bruscas</span></div>
+    <div class="tile"><span class="v" id="dGol">0</span><span class="l">Golpes y caídas</span></div>
+  </div>
+  <div class="row" style="margin-top:8px"><span class="lbl">Temperatura (°C). Pellizca para ampliar.</span><button class="mini" onclick="verTodo()">Ver todo</button></div>
+  <div class="ch"><canvas id="chTemp"></canvas></div>
+  <div class="lbl" style="margin-top:12px">Vibración (g) y eventos: ● maniobra · ▲ bache · ■ golpe/caída · ✕ vuelco</div>
+  <div class="ch"><canvas id="chVib"></canvas></div>
+  <div class="lbl" style="margin-top:12px">Golpes, caídas y baches: fuerza real de cada uno (g). Línea roja = umbral de golpe del paquete · línea ámbar = umbral de bache.</div>
+  <div class="ch" id="golBox"><canvas id="chGol"></canvas></div>
+  <div class="hint" id="golTxt"></div>
+  <div class="lbl" style="margin-top:12px">Alarmas de temperatura</div>
+  <div class="scroll" style="max-height:200px"><table><thead><tr><th>Hora</th><th>Qué pasó</th><th>Temp.</th></tr></thead><tbody id="tAl"></tbody></table></div>
+  <div class="lbl" style="margin-top:12px">Eventos de conducción y del paquete</div>
+  <div class="scroll" style="max-height:300px"><table><thead><tr><th>Hora</th><th>Evento</th><th>Detalle</th></tr></thead><tbody id="tEv"></tbody></table></div>
+</div>
+
+<details class="card legal">
+  <summary>Protección de datos — RGPD y LOPDGDD</summary>
+  <p><b>Qué datos se tratan.</b> Temperatura, movimientos y golpes del paquete con su fecha y hora. Si activas el GPS, también la posición y la velocidad del móvil. Las maniobras y el GPS describen la forma de conducir de una persona: son datos personales del conductor.</p>
+  <p><b>Dónde se tratan.</b> Solo en este móvil; la app no envía nada a ningún servidor. Los viajes descargados se guardan en el móvil, separados por aparato, y se borran con «Borrar historial del móvil» o borrando los datos del sitio en el navegador. Los CSV e informes que exportes quedan bajo tu custodia.</p>
+  <p><b>Conductores asalariados.</b> Si se usa para controlar a trabajadores, la empresa debe informarles antes, de forma expresa, clara e inequívoca, de la existencia del sistema y de sus características (art. 90 de la Ley Orgánica 3/2018 y art. 20.3 del Estatuto de los Trabajadores), y cumplir el RGPD (información previa, finalidad limitada, conservación limitada y derechos de acceso, rectificación, supresión y oposición).</p>
+  <p><b>Terceros.</b> La página se sirve desde GitHub Pages y carga las librerías de gráficas desde jsDelivr; esos servicios reciben tu dirección IP, pero no los datos del aparato. Los enlaces «ver en el mapa» abren Google Maps con esa posición.</p>
+  <p><b>Seguridad.</b> La conexión Bluetooth exige PIN y va cifrada. La baliza emite sin cifrar la temperatura, el estado de la alarma y la batería, para poder verlos sin conectar.</p>
+  <p><b>Responsable y reclamaciones.</b> Responsable: [NOMBRE Y CONTACTO DEL RESPONSABLE]. Puedes reclamar ante la Agencia Española de Protección de Datos (www.aepd.es).</p>
+</details>
+
+<script>
+// ---- UUID: deben coincidir con el firmware NAI Carga ----
+const SVC ='19b20000-e8f2-537e-4f6c-d104768a1214';
+const DATA='19b20001-e8f2-537e-4f6c-d104768a1214';
+const TIME='19b20002-e8f2-537e-4f6c-d104768a1214';
+const CTRL='19b20003-e8f2-537e-4f6c-d104768a1214';
+const BATT='19b20004-e8f2-537e-4f6c-d104768a1214';
+const FECHA_VALIDA=1600000000;
+const SIN_DATO=0x7FFF;
+const PERFILES={
+  1:{nom:'Congelado',min:-35,max:-15,ret:15,acu:60,cmin:-40,cmax:-12,txt:'Objetivo −18 °C o menos. Se toleran subidas breves hasta −15 °C (normativa europea de congelados); aviso si pasa de −15 °C más de 15 min; crítica por encima de −12 °C.'},
+  2:{nom:'Refrigerado',min:2,max:8,ret:10,acu:30,cmin:0,cmax:15,txt:'Rango 2 a 8 °C. Aviso si sale más de 10 min seguidos; crítica si baja de 0 °C (se congela), si pasa de 15 °C o si suma 30 min fuera de rango.'},
+  3:{nom:'Ambiente controlado',min:15,max:25,ret:30,acu:120,cmin:5,cmax:30,txt:'Rango 15 a 25 °C. Aviso si sale más de 30 min; crítica por debajo de 5 °C, por encima de 30 °C o con 2 h fuera de rango.'},
+  4:{nom:'Personalizado',min:0,max:10,ret:10,acu:30,cmin:-5,cmax:15,txt:'Pon tus límites. Se guardan para la próxima vez.'},
+  0:{nom:'Sin temperatura',txt:'No vigila la temperatura (sigue anotándola si hay sonda). Solo maniobras, golpes, caídas y vuelcos.'}
+};
+const FRAG=['Frágil','Normal','Robusto'], THR_B=[0.5,0.8,1.2], THR_G=[1.5,2.5,4.0];
+const CAUSA=['Vuelve a su rango','Por encima del rango','Por debajo del rango','Por encima del límite crítico',
+  'Por debajo del límite crítico','Demasiado tiempo fuera de rango en total','Temperatura anormal (fallo del equipo de frío o de la sonda)','La sonda no responde'];
+const NIVEL=['Sin alarma','AVISO','ALARMA CRÍTICA'];
+
+let device, chData, chTime, chCtrl, chBatt, conectando=false;
+let recibidos=[], downloading=false, lastRx=0, malos=0, rxIndex=0, rxDesde=0;
+let history=[], viajes=[], sel=-1, gpsHist=[];
+const $=id=>document.getElementById(id);
+const say=t=>{$('msg').textContent=t;};
+const coma=(x,d=1)=>Number(x).toFixed(d).replace('.',',');
+const grados=c=>c===SIN_DATO?'—':coma(c/100,1)+' °C';
+
+// ================= Conexión =================
+function conectarODesconectar(){
+  if(device&&device.gatt&&device.gatt.connected){ say('Desconectando…'); device.gatt.disconnect(); }
+  else connect();
+}
+async function connect(){
+  if(!navigator.bluetooth){ say('Este navegador no tiene Bluetooth web. Usa Chrome en Android o en PC.'); return; }
+  try{
+    say('Buscando…');
+    device=await navigator.bluetooth.requestDevice({filters:[{services:[SVC]},{namePrefix:'NAC'}],optionalServices:[SVC],optionalManufacturerData:[0xFFFF]});
+    device.addEventListener('gattserverdisconnected',()=>{ setStatus(false); if(!conectando) say('Desconectado.'); });
+    conectando=true;
+    let err=null, ok=false;
+    for(let intento=1; intento<=5 && !ok; intento++){
+      try{
+        say(intento===1?'Conectando…':'Reintentando ('+intento+' de 5)… Si el móvil pide vincular (mira la barra de notificaciones), introduce el PIN.');
+        const srv=await device.gatt.connect();
+        const s=await srv.getPrimaryService(SVC);
+        chTime=await s.getCharacteristic(TIME); chData=await s.getCharacteristic(DATA);
+        chCtrl=await s.getCharacteristic(CTRL); chBatt=await s.getCharacteristic(BATT);
+        const b=new Uint8Array(4); new DataView(b.buffer).setUint32(0,Math.floor(Date.now()/1000),true);
+        await chTime.writeValue(b);
+        await chData.startNotifications();
+        chData.addEventListener('characteristicvaluechanged',onData);
+        ok=true;
+      }catch(e){ err=e; await new Promise(r=>setTimeout(r,4000)); }
+    }
+    conectando=false;
+    if(!ok){ try{ if(device.gatt.connected) device.gatt.disconnect(); }catch(e){}
+      say('No se pudo conectar ('+(err?err.message:'error')+'). Empareja el aparato en Ajustes > Bluetooth con el PIN y vuelve a intentarlo.'); return; }
+    setStatus(true);
+    say('Conectado a '+(device.name||'aparato')+'. Hora sincronizada.');
+    await identificar(); leerBateria(); pedirEstado();
+  }catch(e){ say('No se pudo conectar: '+e.message); }
+}
+function conectado(){ return chCtrl&&device&&device.gatt&&device.gatt.connected; }
+function setStatus(on){
+  if(!on) $('bat').style.display='none';
+  $('st').textContent=on?'Conectado':'Desconectado'; $('st').className='status'+(on?' on':'');
+  $('btnConn').textContent=on?'DESCONECTAR':'CONECTAR APARATO'; $('btnConn').className='btn '+(on?'s':'p');
+  if(on) $('estadoCard').style.display='block';
+}
+async function leerBateria(){
+  const el=$('bat'); if(!chBatt){ el.style.display='none'; return; }
+  try{
+    const v=await chBatt.readValue(), mv=v.getUint16(0,true), p=v.getUint8(2);
+    if(p===255) el.textContent='Con USB';
+    else{ el.textContent='Batería '+p+' %'; el.style.background=p<=15?'#ef4444':(p<=35?'#f59e0b':'#334155'); el.style.color=p<=35&&p>15?'#3b2a00':'#f1f5f9'; }
+    el.title=(mv/1000).toFixed(2)+' V'; el.style.display='inline-block';
+  }catch(e){ el.style.display='none'; }
+}
+
+// ================= Paquetes de 20 bytes =================
+function onData(e){
+  const t=e.target.value;
+  for(let o=0;o+20<=t.byteLength;o+=20) paquete(new DataView(t.buffer,t.byteOffset+o,20));
+}
+function paquete(v){
+  let sum=0; for(let i=0;i<18;i++) sum=(sum+v.getUint8(i))&0xFFFF;
+  const t=v.getUint32(0,true), bueno=sum===v.getUint16(18,true);
+  if(bueno && t===0xFFFFFFFD){ infoDato(v); return; }
+  if(bueno && t===0xFFFFFFFC){ estadoDato(v); return; }
+  if(!downloading) return;
+  const n=rxDesde+rxIndex; rxIndex++; lastRx=Date.now();
+  if(!bueno){ malos++; return; }
+  const r=decodificar(v,n); if(r) recibidos.push(r);
+  say('Descargando… '+recibidos.length+' registros');
+}
+function decodificar(v,n){
+  const t=v.getUint32(0,true), tipo=v.getUint8(4), r={n,t,tipo};
+  if(tipo===1){ r.temp=v.getInt16(5,true); r.vib=v.getUint16(7,true); r.pico=v.getUint16(9,true);
+    r.nMan=v.getUint8(11); r.nBache=v.getUint8(12); r.nGolpe=v.getUint8(13); r.incl=v.getUint8(14); r.al=v.getUint8(15); r.bat=v.getUint8(16); }
+  else if(tipo===2){ r.sub=v.getUint8(5); r.pico=v.getUint16(6,true); r.dur=v.getUint16(8,true);
+    r.hx=v.getInt16(10,true); r.hy=v.getInt16(12,true); r.vv=v.getInt16(14,true); r.incl=v.getUint8(16); }
+  else if(tipo===3){ r.perfil=v.getUint8(5); r.tMin=v.getInt16(6,true); r.tMax=v.getInt16(8,true); r.cMin=v.getInt16(10,true);
+    r.cMax=v.getInt16(12,true); r.ret=v.getUint8(14); r.acu=v.getUint8(15); r.thrM=v.getUint8(16); r.op=v.getUint8(17); }
+  else if(tipo===4){ r.nivel=v.getUint8(5); r.causas=v.getUint8(6); r.tMinMed=v.getInt16(7,true); r.tMaxMed=v.getInt16(9,true);
+    r.fueraMin=v.getUint16(11,true); r.nEv=v.getUint16(13,true); }
+  else if(tipo===5){ r.nivel=v.getUint8(5); r.causa=v.getUint8(6); r.temp=v.getInt16(7,true); r.fuera10=v.getUint16(9,true); }
+  else return null;
+  return r;
+}
+
+// ================= Aparato e identificación =================
+let aparato={key:null,serie:'',nombre:'',next:0,ext:false,capMB:0}, infoRes=null;
+function aliasDe(k){ try{ return localStorage.getItem('nac_alias_'+k)||''; }catch(e){ return ''; } }
+function infoDato(v){
+  const id=v.getUint32(4,true), ver=v.getFloat32(8,true), next=Math.round(v.getFloat32(12,true)), ext=v.getUint8(16)===1, cap=v.getUint8(17);
+  if(infoRes){ infoRes({key:id.toString(16).toUpperCase().padStart(8,'0'),serie:'NAC-'+(id&0xFFFF).toString(16).toUpperCase().padStart(4,'0'),
+    ver,next,ext,capMB:ext?Math.pow(2,cap)/1048576:0}); infoRes=null; }
+}
+async function identificar(){
+  let info=null;
+  try{ const espera=new Promise(r=>{ infoRes=r; setTimeout(()=>{ if(infoRes){ infoRes(null); infoRes=null; } },2500); });
+       await chCtrl.writeValue(new Uint8Array([0x07])); info=await espera; }catch(e){}
+  if(info) fijarAparato(info.key,info.serie,info);
+  else say('El aparato no se identifica: ¿lleva el firmware NAI Carga?');
+}
+function fijarAparato(key,serie,info){
+  aparato={key,serie,nombre:aliasDe(key)||serie,next:info?info.next:0,ext:info?info.ext:false,capMB:info?info.capMB:0,conInfo:!!info};
+  try{ localStorage.setItem('nac_ultimo',JSON.stringify({key,serie})); }catch(e){}
+  $('apRow').style.display='flex'; $('apNom').textContent=aparato.nombre;
+  $('apId').textContent=((aparato.nombre!==serie)?'('+serie+') ':'')+(info?(aparato.ext?'· memoria externa '+aparato.capMB+' MB':'· memoria interna (~13 h)'):'');
+  Promise.all([histCargar(key),gpsCargar(key)]).then(([h,g])=>{ if(aparato.key===key){ history=h; gpsHist=g; construirViajes(); } });
+}
+function renombrar(){
+  if(!aparato.key){ say('Conecta primero el aparato.'); return; }
+  const n=prompt('Nombre para '+aparato.serie+' (p. ej. "Nevera 1"; vacío = sin nombre):',aliasDe(aparato.key));
+  if(n===null) return;
+  try{ if(n.trim()) localStorage.setItem('nac_alias_'+aparato.key,n.trim().slice(0,24)); else localStorage.removeItem('nac_alias_'+aparato.key); }catch(e){}
+  fijarAparato(aparato.key,aparato.serie,aparato.conInfo?aparato:null);
+}
+
+// ================= Estado en vivo =================
+let estado=null, estadoT=null;
+async function pedirEstado(){
+  clearTimeout(estadoT);
+  if(!conectado()) return;
+  if(!downloading && document.visibilityState==='visible'){ try{ await chCtrl.writeValue(new Uint8Array([0x12])); }catch(e){} }
+  estadoT=setTimeout(pedirEstado,5000);
+}
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') pedirEstado(); });
+function estadoDato(v){
+  estado={temp:v.getInt16(4,true),viaje:v.getUint8(6),nivelMax:v.getUint8(7),fuera:v.getUint8(8)&1,nivelAhora:v.getUint8(8)>>1,
+    incl:v.getUint8(9),fuera10:v.getUint16(10,true),nEv:v.getUint16(12,true),sonda:v.getUint8(14),bat:v.getUint8(15),causa:v.getUint8(16),perfil:v.getUint8(17)};
+  pintarEstado('conectado');
+  if(estado.viaje && opc.gps && gpsWatch===null) gpsIniciar();      // app reabierta en mitad del viaje
+}
+function pintarEstado(fuente){
+  const e=estado; if(!e) return;
+  $('estadoCard').style.display='block';
+  $('esFuente').textContent=fuente==='baliza'?'(por la baliza, sin conectar)':'';
+  $('esTemp').textContent=e.sonda?grados(e.temp):'Sin sonda';
+  $('esTemp').style.color=e.viaje&&e.fuera?'#f59e0b':'';
+  const el=$('esNivel');
+  if(!e.viaje){ el.className='estado nx'; el.textContent='Sin viaje en marcha'; }
+  else{ el.className='estado n'+Math.min(2,e.nivelMax);
+    el.textContent=(e.nivelMax?NIVEL[e.nivelMax]+(e.causa!==undefined&&e.causa>0?': '+CAUSA[e.causa].toLowerCase():''):'Viaje en marcha · todo correcto')+
+      (e.perfil!==undefined&&PERFILES[e.perfil]?' · '+PERFILES[e.perfil].nom:''); }
+  $('esFuera').textContent=e.viaje&&e.fuera10!==undefined?coma(e.fuera10/10,1)+' min':'—';
+  $('esEv').textContent=e.viaje&&e.nEv!==undefined?e.nEv:'—';
+  $('esIncl').textContent=e.viaje&&e.incl!==undefined?e.incl+'°':'—';
+  $('esDet').textContent=e.viaje?(e.fuera?'Ahora mismo está FUERA de rango. ':'Ahora mismo en rango. ')+
+    (e.nivelMax?'La alarma queda marcada hasta terminar el viaje (el LED parpadea).':''):'';
+  $('btnIni').textContent=e.viaje?'EMPEZAR OTRO VIAJE (termina el actual)':'INICIAR VIAJE';
+}
+// Baliza: Chrome necesita activar chrome://flags → "Experimental Web Platform features"
+let vigilando=false;
+async function vigilarBaliza(){
+  if(!device){ say('Conecta una vez el aparato en esta sesión; después podrás vigilarlo sin conectar.'); return; }
+  if(!device.watchAdvertisements){ say('Este Chrome no lee balizas. Actívalo en chrome://flags → "Experimental Web Platform features", o conecta para ver el estado.'); return; }
+  try{
+    if(device.gatt.connected) device.gatt.disconnect();
+    if(!vigilando){
+      device.addEventListener('advertisementreceived',ev=>{
+        const m=ev.manufacturerData&&ev.manufacturerData.get(0xFFFF); if(!m||m.byteLength<7) return;
+        if(m.getUint8(0)!==78||m.getUint8(1)!==67) return;          // "NC"
+        const f=m.getUint8(5);
+        estado={temp:m.getInt16(2,true),nivelMax:m.getUint8(4),viaje:f&1,fuera:(f>>1)&1,sonda:(f&4)?0:1,bat:m.getUint8(6)};
+        pintarEstado('baliza');
+      });
+    }
+    await device.watchAdvertisements(); vigilando=true;
+    say('Vigilando la baliza (cada ~2 s). Para descargar o cambiar el viaje, vuelve a conectar.');
+  }catch(e){ say('No se pudo vigilar la baliza: '+e.message); }
+}
+
+// ================= Perfil y opciones del viaje =================
+let opc={perfil:2,frag:1,thrM:30,int10:6,flecha:0,gps:0,personal:null};
+try{ const g=JSON.parse(localStorage.getItem('nac_opc')||'null'); if(g) opc=Object.assign(opc,g); }catch(e){}
+function guardarOpc(){ try{ localStorage.setItem('nac_opc',JSON.stringify(opc)); }catch(e){} }
+function valoresPerfil(p){ return (p===4&&opc.personal)?opc.personal:PERFILES[p]; }
+function pintarPerfil(){
+  document.querySelectorAll('#perfiles button').forEach(b=>b.className=(+b.dataset.p===opc.perfil)?'on':'');
+  document.querySelectorAll('#frags button').forEach(b=>b.className=(+b.dataset.f===opc.frag)?'on':'');
+  document.querySelectorAll('#vehs button').forEach(b=>b.className=(+b.dataset.v===opc.thrM)?'on':'');
+  $('fInt').value=String(opc.int10); $('fFlecha').checked=!!opc.flecha; $('fGps').checked=!!opc.gps;
+  const P=valoresPerfil(opc.perfil), sin=opc.perfil===0;
+  [['fMin','min'],['fMax','max'],['fRet','ret'],['fAcu','acu'],['fCMin','cmin'],['fCMax','cmax']].forEach(([id,k])=>{
+    $(id).disabled=sin; $(id).value=sin?'':P[k]; });
+  $('perfilTxt').textContent=PERFILES[opc.perfil].txt+(sin?'':' En cualquier perfil: crítica inmediata si baja de −40 °C o pasa de 40 °C, o si la sonda deja de responder.');
+}
+function elegirPerfil(p){ opc.perfil=p; guardarOpc(); pintarPerfil(); }
+function elegir(k,v){ opc[k]=v; guardarOpc(); pintarPerfil(); }
+function editado(){                                   // tocar un valor convierte el perfil en personalizado
+  if(opc.perfil===0) return;
+  const P={min:+$('fMin').value,max:+$('fMax').value,ret:+$('fRet').value,acu:+$('fAcu').value,cmin:+$('fCMin').value,cmax:+$('fCMax').value};
+  const base=PERFILES[opc.perfil];
+  if(opc.perfil!==4 && ['min','max','ret','acu','cmin','cmax'].every(k=>P[k]===base[k])) return;
+  opc.personal=P; if(opc.perfil!==4){ opc.perfil=4; document.querySelectorAll('#perfiles button').forEach(b=>b.className=(+b.dataset.p===4)?'on':''); $('perfilTxt').textContent=PERFILES[4].txt; }
+  guardarOpc();
+}
+pintarPerfil();
+
+async function iniciarViaje(){
+  if(!conectado()){ say('Conecta primero.'); return; }
+  const sin=opc.perfil===0;
+  const P=sin?{min:-40,max:40,ret:0,acu:0,cmin:-40,cmax:40}:{min:+$('fMin').value,max:+$('fMax').value,ret:+$('fRet').value,acu:+$('fAcu').value,cmin:+$('fCMin').value,cmax:+$('fCMax').value};
+  if(!sin){
+    if([P.min,P.max,P.cmin,P.cmax,P.ret,P.acu].some(x=>!isFinite(x))){ say('Rellena todos los valores del perfil.'); return; }
+    if(P.min>=P.max){ say('El mínimo del rango debe ser menor que el máximo.'); return; }
+    if(P.cmin>P.min||P.cmax<P.max){ say('Los límites críticos deben quedar fuera del rango (crítica baja ≤ mínimo; crítica alta ≥ máximo).'); return; }
+    if(P.ret<0||P.ret>255||P.acu<0||P.acu>255){ say('Los minutos van de 0 a 255.'); return; }
+  }
+  if(estado&&estado.viaje&&!confirm('Hay un viaje en marcha. ¿Terminarlo y empezar uno nuevo?')) return;
+  const b=new Uint8Array(15), dv=new DataView(b.buffer);
+  b[0]=0x10; b[1]=opc.perfil;
+  dv.setInt16(2,Math.round(P.min*100),true); dv.setInt16(4,Math.round(P.max*100),true);
+  dv.setInt16(6,Math.round(P.cmin*100),true); dv.setInt16(8,Math.round(P.cmax*100),true);
+  b[10]=Math.round(P.ret); b[11]=Math.round(P.acu); b[12]=opc.thrM; b[13]=(opc.frag&3)|(opc.flecha?4:0); b[14]=opc.int10;
+  try{
+    await chCtrl.writeValue(b);
+    say('Calibrando: no muevas el aparato 3 segundos…');
+    setTimeout(()=>{ say('Viaje iniciado ('+PERFILES[opc.perfil].nom+'). El LED destella cada 30 s mientras todo va bien.'); pedirEstado(); },3500);
+    if(opc.gps) gpsIniciar();
+  }catch(e){ say('No se pudo iniciar: '+e.message); }
+}
+async function terminarViaje(){
+  if(!conectado()){ say('Conecta primero.'); return; }
+  if(!confirm('¿Terminar el viaje en marcha?')) return;
+  try{ await chCtrl.writeValue(new Uint8Array([0x11])); gpsParar(); say('Viaje terminado. Descarga los datos para ver el informe.'); setTimeout(pedirEstado,800); }
+  catch(e){ say('No se pudo terminar: '+e.message); }
+}
+
+// ================= GPS del móvil (opcional) =================
+let gpsWatch=null, gpsUlt=0, wakeLock=null;
+async function gpsIniciar(){
+  if(!navigator.geolocation){ say('Este móvil no da la posición al navegador.'); return; }
+  if(gpsWatch!==null) return;
+  gpsWatch=navigator.geolocation.watchPosition(p=>{
+    const t=Math.floor(p.timestamp/1000); if(t-gpsUlt<5||!aparato.key) return; gpsUlt=t;
+    const g={t,lat:p.coords.latitude,lon:p.coords.longitude,v:p.coords.speed,acc:p.coords.accuracy};
+    gpsHist.push(g); gpsGuardar(aparato.key,g);
+  },e=>say('GPS: '+e.message),{enableHighAccuracy:true,maximumAge:5000});
+  try{ if(navigator.wakeLock) wakeLock=await navigator.wakeLock.request('screen'); }catch(e){}
+}
+function gpsParar(){ if(gpsWatch!==null){ navigator.geolocation.clearWatch(gpsWatch); gpsWatch=null; } try{ if(wakeLock) wakeLock.release(); }catch(e){} wakeLock=null; }
+document.addEventListener('visibilitychange',async()=>{ if(document.visibilityState==='visible'&&gpsWatch!==null&&navigator.wakeLock){ try{ wakeLock=await navigator.wakeLock.request('screen'); }catch(e){} } });
+function gpsCerca(t){
+  if(t<FECHA_VALIDA||!gpsHist.length) return null;
+  let best=null, bd=31;
+  for(const g of gpsHist){ const d=Math.abs(g.t-t); if(d<bd){ bd=d; best=g; } }
+  return best;
+}
+
+// ================= Historial en el móvil (IndexedDB) =================
+let db=null;
+function abrirDB(){
+  return new Promise(res=>{
+    if(db) return res(db); if(!window.indexedDB) return res(null);
+    const r=indexedDB.open('nac',1);
+    r.onupgradeneeded=()=>{ r.result.createObjectStore('reg',{keyPath:['ap','n']}); r.result.createObjectStore('gps',{keyPath:['ap','t']}); };
+    r.onsuccess=()=>{ db=r.result; res(db); }; r.onerror=()=>res(null);
+  });
+}
+const rango=k=>IDBKeyRange.bound([k,-Infinity],[k,Infinity]);
+async function guardarEn(store,key,arr){
+  if(!arr.length) return true; const d=await abrirDB(); if(!d) return false;
+  return new Promise(res=>{ try{ const tx=d.transaction(store,'readwrite'), st=tx.objectStore(store);
+    arr.forEach(x=>st.put(Object.assign({ap:key},x))); tx.oncomplete=()=>res(true); tx.onerror=()=>res(false); tx.onabort=()=>res(false);
+  }catch(e){ res(false); } });
+}
+async function cargarDe(store,key){
+  const d=await abrirDB(); if(!d) return [];
+  return new Promise(res=>{ const q=d.transaction(store).objectStore(store).getAll(rango(key));
+    q.onsuccess=()=>res(q.result.map(x=>{ const y=Object.assign({},x); delete y.ap; return y; })); q.onerror=()=>res([]); });
+}
+const histGuardar=(k,a)=>guardarEn('reg',k,a), histCargar=k=>cargarDe('reg',k);
+const gpsGuardar=(k,g)=>guardarEn('gps',k,[g]), gpsCargar=k=>cargarDe('gps',k);
+async function histBorrar(key){
+  const d=await abrirDB(); if(!d) return;
+  for(const st of ['reg','gps']) await new Promise(res=>{ const tx=d.transaction(st,'readwrite'); tx.objectStore(st).delete(rango(key)); tx.oncomplete=res; tx.onerror=res; });
+}
+function ptrLeer(){ try{ return +(localStorage.getItem('nac_ptr_'+aparato.key)||0); }catch(e){ return 0; } }
+function ptrGuardar(n){ try{ localStorage.setItem('nac_ptr_'+aparato.key,String(n)); }catch(e){} }
+async function borrarHistorialMovil(){
+  if(!aparato.key){ say('No hay aparato seleccionado.'); return; }
+  if(!confirm('¿Borrar del móvil todo el historial de '+aparato.nombre+' (viajes y GPS)? Lo que siga en el aparato se podrá volver a descargar.')) return;
+  await histBorrar(aparato.key); ptrGuardar(0); history=[]; gpsHist=[]; construirViajes(); say('Historial del móvil borrado.');
+}
+
+// ================= Descarga y borrado =================
+async function descargar(){
+  if(!conectado()){ say('Conecta primero.'); return; }
+  if(downloading) return;
+  try{ const espera=new Promise(r=>{ infoRes=r; setTimeout(()=>{ if(infoRes){ infoRes(null); infoRes=null; } },2500); });
+       await chCtrl.writeValue(new Uint8Array([0x07])); const i=await espera; if(i){ aparato.next=i.next; } }catch(e){}
+  let desde=ptrLeer(); if(desde>aparato.next) desde=0;
+  recibidos=[]; malos=0; rxIndex=0; rxDesde=desde; downloading=true; lastRx=Date.now();
+  say(desde>0?'Pidiendo registros nuevos…':'Pidiendo datos…');
+  try{ const b=new Uint8Array(5); b[0]=0x08; new DataView(b.buffer).setUint32(1,desde,true); await chCtrl.writeValue(b); }
+  catch(e){ downloading=false; say('Error al pedir datos: '+e.message); return; }
+  const iv=setInterval(async()=>{
+    if(Date.now()-lastRx<=2500) return;
+    clearInterval(iv);
+    // Si el aparato ya había sobrescrito los más antiguos, empieza más adelante: se recoloca por el final
+    const total=rxIndex, esperado=aparato.next-desde, sigue=conectado();
+    // Con la conexión aún abierta, recibir menos de lo esperado significa que el aparato ya había
+    // sobrescrito los más antiguos (memoria circular): lo recibido son los últimos 'total'.
+    if(sigue && total>0 && total<esperado){ const corr=aparato.next-total-desde; recibidos.forEach(r=>r.n+=corr); }
+    const ok=await histGuardar(aparato.key,recibidos);
+    if(ok) ptrGuardar(sigue?aparato.next:desde+total);          // cortada a medias: la próxima vez sigue donde se quedó
+    downloading=false;
+    history=await histCargar(aparato.key); if(!history.length) history=recibidos;
+    construirViajes(); leerBateria(); pedirEstado();
+    say((recibidos.length?'Descarga completa: '+recibidos.length+' registros nuevos'+(malos?' ('+malos+' dañados descartados)':'')+'. ':'No hay registros nuevos. ')+
+        'En el móvil: '+viajes.length+' viaje(s).');
+  },300);
+}
+async function borrar(){
+  if(!conectado()){ say('Conecta primero.'); return; }
+  if(estado&&estado.viaje){ say('Termina antes el viaje en marcha.'); return; }
+  if(!confirm('¿Borrar TODOS los datos del aparato? Lo ya descargado se conserva en el móvil.')) return;
+  try{ await chCtrl.writeValue(new Uint8Array([0x02])); ptrGuardar(0);
+    say(aparato.ext?'Borrando la memoria externa: puede tardar hasta 2 minutos. No desconectes.':'Memoria del aparato borrada.'); }
+  catch(e){ say('Error al borrar: '+e.message); }
+}
+
+// ================= Viajes =================
+function construirViajes(){
+  const H=[...history].sort((a,b)=>a.n-b.n);
+  viajes=[]; let cur=null;
+  for(const r of H){
+    if(r.tipo===3){ cur={ini:r,fin:null,ints:[],evs:[],als:[]}; viajes.push(cur); continue; }
+    if(!cur){ cur={ini:null,fin:null,ints:[],evs:[],als:[]}; viajes.push(cur); }       // sin inicio (datos sobrescritos)
+    if(r.tipo===1) cur.ints.push(r); else if(r.tipo===2) cur.evs.push(r); else if(r.tipo===5) cur.als.push(r);
+    else if(r.tipo===4){ cur.fin=r; cur=null; }
+  }
+  viajes=viajes.filter(v=>v.ints.length||v.evs.length||v.fin||v.ini);
+  sel=viajes.length-1;
+  pintarViajes(); pintarViaje();
+}
+function hora(t,larga){
+  if(t<FECHA_VALIDA) return 'sin hora';
+  return new Date(t*1000).toLocaleString('es-ES',larga?{weekday:'short',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}:{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+function durTxt(s){ s=Math.round(s); const h=Math.floor(s/3600), m=Math.floor(s%3600/60); return h?h+' h '+String(m).padStart(2,'0')+' min':m+' min'; }
+function nivelViaje(v){
+  if(v.fin) return v.fin.nivel;
+  let n=0; v.ints.forEach(r=>n=Math.max(n,r.al&3)); v.als.forEach(a=>n=Math.max(n,a.nivel)); return n;
+}
+function perfilDe(v){ return v.ini?v.ini.perfil:255; }
+function pintarViajes(){
+  const box=$('viajes');
+  if(!viajes.length){ box.innerHTML='<div class="hint">Sin datos todavía.</div>'; return; }
+  box.innerHTML=viajes.map((v,i)=>{
+    const t0=(v.ini||v.ints[0]||v.evs[0]||v.fin).t, n=nivelViaje(v), A=analizar(v), p=perfilDe(v);
+    const col=n>=2?'#ef4444':(n===1?'#f59e0b':'#22c55e');
+    return '<div class="via'+(i===sel?' sel':'')+'" onclick="sel='+i+';pintarViajes();pintarViaje()"><span><span class="dot" style="background:'+col+'"></span>'+
+      hora(t0,true)+'</span><small>'+(PERFILES[p]?PERFILES[p].nom:'sin inicio')+(A.dur?' · '+durTxt(A.dur):'')+(v.fin?'':' · en curso')+'</small></div>';
+  }).reverse().join('');
+}
+
+// --- Clasificación de maniobras ---
+// e1 = eje X del aparato en el plano horizontal; e2 = a su izquierda. Con la flecha hacia delante:
+// hx < 0 frenada, hx > 0 acelerón, hy > 0 curva a la izquierda, hy < 0 a la derecha.
+// Sin flecha: la dirección de la marcha se deduce del eje en el que más se repiten las maniobras (sin sentido).
+function ejeMarcha(evs){
+  const M=evs.filter(e=>e.sub===1); if(M.length<3) return null;
+  let sxx=0,syy=0,sxy=0; M.forEach(e=>{ sxx+=e.hx*e.hx; syy+=e.hy*e.hy; sxy+=e.hx*e.hy; });
+  const ang=0.5*Math.atan2(2*sxy,sxx-syy); return [Math.cos(ang),Math.sin(ang)];
+}
+function clasificar(e,v,eje){
+  const thrM=(v.ini?v.ini.thrM:30)/100, frag=v.ini?(v.ini.op&3):1, flecha=v.ini&&(v.ini.op&4);
+  const g=e.pico/1000;
+  if(e.sub===1){
+    const fuerte=g>=1.5*thrM?'muy brusca':'brusca';
+    let lon=e.hx, lat=e.hy, txt;
+    if(!flecha&&eje){ lon=e.hx*eje[0]+e.hy*eje[1]; lat=-e.hx*eje[1]+e.hy*eje[0]; }
+    if(flecha||eje){
+      if(Math.abs(lon)>=1.2*Math.abs(lat)) txt=flecha?(lon<0?'Frenada':'Acelerón'):'Frenada o acelerón';
+      else if(Math.abs(lat)>=1.2*Math.abs(lon)) txt=flecha?('Curva a la '+(lat>0?'izquierda':'derecha')):'Curva';
+      else txt=flecha?(lon<0?'Frenada en curva':'Acelerón en curva'):'Maniobra combinada';
+    } else txt='Maniobra';
+    return {txt:txt+' '+fuerte, det:coma(g,2)+' g durante '+coma(e.dur/1000,1)+' s', pts:g>=1.5*thrM?5:2, cls:'man', gr:g>=1.5*thrM?2:1};
+  }
+  if(e.sub===2){ const f=g>=1.5*THR_B[frag]; return {txt:f?'Bache fuerte':'Bache',det:coma(g,1)+' g',pts:f?2:1,cls:'bache',gr:f?2:1}; }
+  if(e.sub===3) return {txt:'Golpe',det:coma(g,1)+' g (umbral '+coma(THR_G[frag],1)+' g)',pts:0,cls:'golpe',gr:2};
+  if(e.sub===4){ const h=0.5*9.81*Math.pow(e.dur/1000,2)*100;
+    return {txt:'Caída',det:'unos '+Math.round(h)+' cm ('+e.dur+' ms en el aire)'+(e.pico?' · impacto '+coma(g,1)+' g':' · sin impacto fuerte (lo cogieron)'),pts:0,cls:'golpe',gr:2}; }
+  if(e.sub===5) return {txt:'Vuelco',det:'inclinado '+e.incl+'° respecto a la posición inicial',pts:0,cls:'vuelco',gr:2};
+  return {txt:'?',det:'',pts:0,cls:'',gr:0};
+}
+function analizar(v){
+  const todos=[v.ini,...v.ints,...v.evs,...v.als,v.fin].filter(Boolean).filter(r=>r.t>=FECHA_VALIDA);
+  let dur=0;
+  if(todos.length>=2){ const ts=todos.map(r=>r.t); dur=Math.max(...ts)-Math.min(...ts); }
+  else if(v.ints.length>1) dur=(v.ints.length-1)*60;
+  const eje=ejeMarcha(v.evs);
+  const C=v.evs.map(e=>clasificar(e,v,eje));
+  const pts=C.reduce((a,c)=>a+c.pts,0), horas=Math.max(dur/3600,0.25);
+  const punt=v.evs.length||dur?Math.max(0,Math.round(100-4*pts/horas)):null;
+  const T=v.ints.filter(r=>r.temp!==SIN_DATO).map(r=>r.temp);
+  return {dur,eje,C,punt,nMan:v.evs.filter(e=>e.sub===1).length,nGol:v.evs.filter(e=>e.sub>=3).length,
+    tMin:T.length?Math.min(...T):null,tMax:T.length?Math.max(...T):null,tMed:T.length?T.reduce((a,b)=>a+b,0)/T.length:null};
+}
+
+// --- Gráficas ---
+function mkChart(id,opts){ return new Chart($(id),{type:'line',data:{labels:[],datasets:[]},options:Object.assign({animation:false,responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},zoom:{pan:{enabled:true,mode:'x'},zoom:{pinch:{enabled:true},wheel:{enabled:true},mode:'x'}}},
+  scales:{x:{ticks:{color:'#94a3b8',maxTicksLimit:6},grid:{color:'#1e293b'}},y:{ticks:{color:'#94a3b8'},grid:{color:'#283548'}}}},opts||{})}); }
+const gTemp=mkChart('chTemp'), gVib=mkChart('chVib');
+const gGol=new Chart($('chGol'),{type:'bar',data:{labels:[],datasets:[]},options:{animation:false,responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},zoom:{pan:{enabled:true,mode:'x'},zoom:{pinch:{enabled:true},wheel:{enabled:true},mode:'x'}},
+    tooltip:{callbacks:{label:c=>c.dataset.type==='line'?c.dataset.label:(golInfo[c.dataIndex]||'')}}},
+  scales:{x:{ticks:{color:'#94a3b8',maxTicksLimit:8},grid:{color:'#1e293b'}},y:{beginAtZero:true,ticks:{color:'#94a3b8'},grid:{color:'#283548'},title:{display:true,text:'g',color:'#94a3b8'}}}}});
+let golInfo=[];
+function verTodo(){ [gTemp,gVib,gGol].forEach(g=>{ if(g.resetZoom) g.resetZoom(); }); }
+
+function pintarViaje(){
+  const v=viajes[sel];
+  if(!v){ $('detalle').style.display='none'; return; }
+  $('detalle').style.display='block';
+  const A=analizar(v), n=nivelViaje(v), p=perfilDe(v), ini=v.ini;
+  const el=$('dNivel'); el.className='estado n'+n;
+  el.textContent=(n===0?'Temperatura correcta en todo el viaje':NIVEL[n])+(v.fin?'':' · viaje en curso o sin terminar');
+  if(p===0||p===255) { el.className='estado nx'; el.textContent=p===0?'Viaje sin control de temperatura':'Viaje sin registro de inicio (datos antiguos sobrescritos)'; }
+  const t0=(ini||v.ints[0]||v.evs[0]||v.fin).t, tf=v.fin?v.fin.t:(v.ints.length?v.ints[v.ints.length-1].t:t0);
+  const causas=v.fin?[...Array(8).keys()].filter(c=>c>0&&(v.fin.causas>>c)&1):[...new Set(v.als.filter(a=>a.nivel>0).map(a=>a.causa))];
+  const fueraMin=v.fin?v.fin.fueraMin:(v.als.length?Math.max(...v.als.map(a=>a.fuera10))/10:0);
+  const golpes=v.evs.filter(e=>e.sub>=3);
+  $('dRes').innerHTML=
+    '<span class="k">Inicio:</span> <b>'+hora(t0,true)+'</b><br><span class="k">Fin:</span> <b>'+(v.fin?hora(tf,true):'—')+'</b>'+(A.dur?' · '+durTxt(A.dur):'')+'<br>'+
+    (ini&&p>0&&p<255?'<span class="k">Perfil:</span> '+PERFILES[p].nom+' · rango '+coma(ini.tMin/100)+' a '+coma(ini.tMax/100)+' °C · aviso tras '+ini.ret+' min · crítica &lt; '+coma(ini.cMin/100)+' o &gt; '+coma(ini.cMax/100)+' °C'+(ini.acu?' o '+ini.acu+' min fuera en total':'')+'<br>':'')+
+    (A.tMin!==null?'<span class="k">Temperatura:</span> mín. <b>'+grados(A.tMin)+'</b> · máx. <b>'+grados(A.tMax)+'</b> · media '+grados(Math.round(A.tMed))+(p>0&&p<255?' · fuera de rango <b>'+coma(fueraMin,fueraMin<10?1:0)+' min</b>':'')+'<br>':'<span class="k">Temperatura:</span> sin datos de la sonda<br>')+
+    (causas.length?'<span class="k">Alarmas:</span> <b>'+causas.map(c=>CAUSA[c]).join(' · ')+'</b><br>':'')+
+    '<span class="k">Paquete:</span> '+(golpes.length?'<b style="color:#f59e0b">'+golpes.length+' incidencia(s): '+
+      Object.entries(golpes.reduce((o,e)=>{ const t=['','','','golpe','caída','vuelco'][e.sub]; o[t]=(o[t]||0)+1; return o; },{})).map(([k,c])=>c+' '+k+(c>1?'s':'')).join(', ')+'</b>':'sin golpes, caídas ni vuelcos')+
+    ' · fragilidad '+(ini?FRAG[ini.op&3].toLowerCase():'—')+'<br>'+
+    '<span class="k">Orientación:</span> '+(ini&&(ini.op&4)?'flecha hacia delante (frenadas, acelerones y curvas por separado)':(A.eje?'dirección de la marcha deducida de las maniobras (no distingue frenada de acelerón)':'sin dirección de la marcha (pocas maniobras)'))+
+    (ini&&(ini.op&8)?'<br><b style="color:#f59e0b">Aviso: el aparato se movía al calibrar; la clasificación de eventos puede ser menos fiable.</b>':'');
+  $('dPunt').textContent=A.punt===null?'—':A.punt; $('dMan').textContent=A.nMan; $('dGol').textContent=A.nGol;
+
+  // Temperatura con su rango
+  const I=v.ints, conHora=I.length&&I[0].t>=FECHA_VALIDA;
+  const lab=I.map((r,i)=>r.t>=FECHA_VALIDA?new Date(r.t*1000).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}):'#'+(i+1));
+  const T=I.map(r=>r.temp===SIN_DATO?null:r.temp/100);
+  const usaRango=ini&&p>0&&p<255;
+  const fuera=I.map(r=>usaRango&&r.temp!==SIN_DATO&&(r.temp>ini.tMax||r.temp<ini.tMin));
+  gTemp.data.labels=lab;
+  gTemp.data.datasets=[{data:T,borderColor:'#38bdf8',backgroundColor:'#38bdf8',borderWidth:2,tension:.2,spanGaps:false,
+      pointRadius:T.map((_,i)=>fuera[i]?3:(I.length<60?2:0)),pointBackgroundColor:T.map((_,i)=>fuera[i]?'#ef4444':'#38bdf8')}];
+  if(usaRango){
+    const linea=(val,col,dash)=>({data:I.map(()=>val/100),borderColor:col,borderWidth:1,borderDash:dash,pointRadius:0,fill:false});
+    gTemp.data.datasets.push(linea(ini.tMax,'#22c55e',[6,4]),linea(ini.tMin,'#22c55e',[6,4]),linea(ini.cMax,'#ef4444',[2,3]),linea(ini.cMin,'#ef4444',[2,3]));
+  }
+  gTemp.update();
+  // Vibración y eventos (cada evento se coloca en el intervalo en el que ocurrió, por número de registro)
+  gVib.data.labels=lab;
+  const vib=I.map(r=>r.vib/1000);
+  const idxDe=e=>{ let k=I.findIndex(r=>r.n>e.n); return k<0?I.length-1:k; };
+  const marca={1:['circle','#a78bfa'],2:['triangle','#f59e0b'],3:['rect','#ef4444'],4:['rect','#ef4444'],5:['crossRot','#ef4444']};
+  const sets=[{data:vib,borderColor:'#64748b',backgroundColor:'#64748b33',fill:true,borderWidth:1.5,pointRadius:0,tension:.2}];
+  [1,2,3,4,5].forEach(s=>{ const d=I.map(()=>null); v.evs.filter(e=>e.sub===s).forEach(e=>{ const k=idxDe(e); if(k>=0) d[k]=Math.max(d[k]||0,Math.min(e.pico/1000,vib.length?Math.max(0.05,...vib)*1.3:1)); });
+    sets.push({data:d,showLine:false,pointStyle:marca[s][0],pointRadius:6,pointBackgroundColor:marca[s][1],pointBorderColor:marca[s][1]}); });
+  gVib.data.datasets=sets; gVib.update();
+  // Golpes, caídas y baches con su fuerza real y los umbrales del paquete
+  const frag=ini?(ini.op&3):1, thrB=THR_B[frag], thrG=THR_G[frag];
+  const IMP=v.evs.map((e,i)=>({e,c:A.C[i]})).filter(x=>x.e.sub>=2&&x.e.sub<=4&&x.e.pico>0);
+  const colG={2:'#f59e0b',3:'#ef4444',4:'#b91c1c'};
+  gGol.data.labels=IMP.map((x,k)=>x.e.t>=FECHA_VALIDA?new Date(x.e.t*1000).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}):'#'+(k+1));
+  golInfo=IMP.map(x=>x.c.txt+': '+x.c.det);
+  const lineaG=(val,col,txt)=>({type:'line',label:txt,data:IMP.map(()=>val),borderColor:col,borderWidth:1.5,borderDash:[6,4],pointRadius:0,fill:false});
+  gGol.data.datasets=[{type:'bar',data:IMP.map(x=>x.e.pico/1000),backgroundColor:IMP.map(x=>colG[x.e.sub]),borderRadius:4,maxBarThickness:28},
+    lineaG(thrG,'#ef4444','Umbral de golpe '+coma(thrG,1)+' g ('+FRAG[frag].toLowerCase()+')'),lineaG(thrB,'#f59e0b','Umbral de bache '+coma(thrB,1)+' g')];
+  gGol.update();
+  $('golBox').style.display=IMP.length?'block':'none';
+  const alVuelo=v.evs.filter(e=>e.sub===4&&!e.pico).length, vuelcos=v.evs.filter(e=>e.sub===5).length;
+  if(IMP.length){
+    const mx=IMP.reduce((a,x)=>x.e.pico>a.e.pico?x:a,IMP[0]), sobre=IMP.filter(x=>x.e.pico/1000>=thrG).length;
+    $('golTxt').innerHTML='Mayor: <b>'+coma(mx.e.pico/1000,1)+' g</b> ('+mx.c.txt.toLowerCase()+', '+hora(mx.e.t)+'). '+
+      (sobre?'<b style="color:#ef4444">'+sobre+' pasa(n) del umbral de golpe del paquete.</b>':'Ninguno llega al umbral de golpe del paquete.')+
+      (alVuelo?' Además, '+alVuelo+' caída(s) sin impacto fuerte (lo cogieron).':'')+(vuelcos?' '+vuelcos+' vuelco(s).':'')+' Toca una barra para ver el detalle.';
+  } else $('golTxt').textContent='Sin golpes, caídas ni baches en este viaje.'+(alVuelo?' '+alVuelo+' caída(s) sin impacto fuerte.':'')+(vuelcos?' '+vuelcos+' vuelco(s).':'');
+  verTodo();
+
+  // Tablas
+  $('tAl').innerHTML=v.als.length?v.als.map(a=>'<tr><td>'+hora(a.t)+'</td><td>'+(a.nivel?'<b style="color:'+(a.nivel>=2?'#ef4444':'#f59e0b')+'">'+NIVEL[a.nivel]+'</b>: ':'')+
+    (a.nivel===0&&a.causa>0?'Sale del rango: ':'')+CAUSA[a.causa].replace(/^./,c=>a.nivel===0&&a.causa>0?c.toLowerCase():c)+'</td><td>'+grados(a.temp)+'</td></tr>').join('')
+    :'<tr><td colspan="3">'+(p>0&&p<255?'Ninguna: la temperatura no salió del rango.':'Sin control de temperatura.')+'</td></tr>';
+  $('tEv').innerHTML=v.evs.length?v.evs.map((e,i)=>{ const c=A.C[i], g=gpsCerca(e.t);
+    return '<tr><td>'+hora(e.t)+'</td><td'+(c.gr>=2?' style="color:#f59e0b;font-weight:700"':'')+'>'+c.txt+'</td><td>'+c.det+
+      (g?'<br>'+(g.v!==null&&g.v!==undefined?Math.round(g.v*3.6)+' km/h · ':'')+'<a href="https://maps.google.com/?q='+g.lat.toFixed(6)+','+g.lon.toFixed(6)+'" target="_blank" rel="noopener">ver en el mapa</a>':'')+'</td></tr>'; }).join('')
+    :'<tr><td colspan="3">Ningún evento: conducción suave y paquete sin golpes.</td></tr>';
+}
+
+// ================= CSV e informe =================
+function exportCSV(){
+  if(!viajes.length){ say('No hay datos que exportar.'); return; }
+  let csv='viaje,registro,tipo,unixTime,fecha,temp_C,vibracion_g,pico_g,evento,detalle,hx_g,hy_g,vertical_g,inclinacion_grados,alarma_nivel,alarma_causa\n';
+  const q=s=>'"'+String(s).replace(/"/g,'""')+'"';
+  viajes.forEach((v,k)=>{ const A=analizar(v); let ie=0;
+    [v.ini,...v.ints,...v.evs,...v.als,v.fin].filter(Boolean).sort((a,b)=>a.n-b.n).forEach(r=>{
+      const f=r.t>=FECHA_VALIDA?new Date(r.t*1000).toISOString():'';
+      let fila=[k+1,r.n,['','intervalo','evento','inicio','fin','alarma'][r.tipo],r.t,f];
+      if(r.tipo===1) fila.push(r.temp===SIN_DATO?'':(r.temp/100).toFixed(2),(r.vib/1000).toFixed(3),(r.pico/1000).toFixed(3),'','','','','',r.incl,r.al&3,'');
+      else if(r.tipo===2){ const c=A.C[v.evs.indexOf(r)]; ie++; fila.push('','',(r.pico/1000).toFixed(3),q(c.txt),q(c.det),(r.hx/1000).toFixed(3),(r.hy/1000).toFixed(3),(r.vv/1000).toFixed(3),r.incl,'',''); }
+      else if(r.tipo===5) fila.push(r.temp===SIN_DATO?'':(r.temp/100).toFixed(2),'','','','','','','','',r.nivel,q(CAUSA[r.causa]));
+      else if(r.tipo===3) fila.push('','','',q('inicio '+(PERFILES[r.perfil]?PERFILES[r.perfil].nom:'')),q('rango '+r.tMin/100+' a '+r.tMax/100+' C'),'','','','','','');
+      else fila.push('','','',q('fin'),q('fuera de rango '+r.fueraMin+' min'),'','','','',r.nivel,'');
+      csv+=fila.join(',')+'\n';
+    });
+  });
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv'}));
+  a.download='NaiCarga_'+(aparato.nombre||'NAC').replace(/[^A-Za-z0-9_-]+/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
+}
+function informe(){
+  const v=viajes[sel]; if(!v){ say('Elige un viaje.'); return; }
+  const w=window.open('','_blank'); if(!w){ say('El navegador ha bloqueado la ventana del informe.'); return; }
+  const img=$('chTemp').toDataURL('image/png'), img2=$('chVib').toDataURL('image/png'), img3=$('chGol').toDataURL('image/png');
+  const css='body{font-family:system-ui,sans-serif;color:#111;max-width:760px;margin:20px auto;padding:0 16px}h1{font-size:1.3em}'+
+    'table{width:100%;border-collapse:collapse;font-size:.85em}td,th{border-bottom:1px solid #ccc;padding:5px;text-align:left}.k{color:#555}'+
+    '.e{padding:8px;border-radius:8px;font-weight:700;margin:8px 0}img{width:100%;background:#0f172a;border-radius:8px}';
+  const n=nivelViaje(v), col=['#dcfce7','#fef3c7','#fee2e2'][n]||'#eee';
+  w.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Informe de viaje</title><style>'+css+'</style></head><body>'+
+    '<h1>Informe de transporte — '+(aparato.nombre||'')+'</h1><div class="e" style="background:'+col+'">'+$('dNivel').textContent+'</div>'+
+    '<p>'+$('dRes').innerHTML+'</p><p><b>Puntuación de conducción:</b> '+$('dPunt').textContent+' / 100 · maniobras bruscas: '+$('dMan').textContent+' · golpes y caídas: '+$('dGol').textContent+'</p>'+
+    '<h3>Temperatura</h3><img src="'+img+'"><h3>Vibración y eventos</h3><img src="'+img2+'">'+
+    ($('golBox').style.display!=='none'?'<h3>Golpes, caídas y baches</h3><img src="'+img3+'">':'')+'<p>'+$('golTxt').innerHTML.replace(' Toca una barra para ver el detalle.','')+'</p>'+
+    '<h3>Alarmas</h3><table><tr><th>Hora</th><th>Qué pasó</th><th>Temp.</th></tr>'+$('tAl').innerHTML+'</table>'+
+    '<h3>Eventos</h3><table><tr><th>Hora</th><th>Evento</th><th>Detalle</th></tr>'+$('tEv').innerHTML+'</table>'+
+    '<p class="k" style="font-size:.8em">Generado por Nai Carga el '+new Date().toLocaleString('es-ES')+'. Registrador de fabricación propia, sin calibración certificada: los valores son orientativos.</p>'+
+    '<script>setTimeout(()=>print(),400)<\/script></body></html>');
+  w.document.close();
+}
+
+// Al abrir: el último aparato usado
+try{ const u=JSON.parse(localStorage.getItem('nac_ultimo')||'null'); if(u&&u.key) fijarAparato(u.key,u.serie,null); }catch(e){}
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+</script>
+</body>
+</html>
