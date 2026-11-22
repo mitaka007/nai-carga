@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Nai Carga</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f172a">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2"></script>
+<style>
+:root{--bg:#0f172a;--card:#1e293b;--card2:#334155;--acc:#0ea5e9;--text:#f1f5f9;--muted:#94a3b8;
+  --ok:#22c55e;--warn:#f59e0b;--danger:#ef4444}
+*{box-sizing:border-box}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);margin:0 auto;padding:14px;max-width:640px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+h2{margin:4px 0 12px;font-size:1.1em}
+.status{font-size:.78em;padding:4px 10px;border-radius:20px;background:var(--card2)}
+.status.on{background:var(--ok);color:#06240f}
+.btn{width:100%;padding:15px;border:none;border-radius:12px;font-weight:700;font-size:1em;cursor:pointer;margin:6px 0;color:#fff}
+.btn.p{background:var(--acc)} .btn.s{background:var(--card2)} .btn.d{background:var(--danger)} .btn.ok{background:#15803d}
+.btn:disabled{opacity:.45}
+.card{background:var(--card);border-radius:14px;padding:12px;margin:10px 0}
+.lbl{font-size:.72em;color:var(--muted);margin:2px 0 4px}
+.hint{font-size:.78em;color:var(--muted);margin:4px 2px 10px}
+.msg{font-size:.85em;color:var(--muted);margin:6px 2px;min-height:1.2em}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;min-width:30%;padding:9px 6px;border:2px solid var(--card2);border-radius:10px;background:transparent;color:#fff;font-weight:700;cursor:pointer;font-size:.85em}
+.seg button small{display:block;font-weight:400;font-size:.78em;color:var(--muted)}
+.seg button.on{background:var(--acc);border-color:var(--acc)} .seg button.on small{color:#e0f2fe}
+.campos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.campos label{font-size:.75em;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+.campos input,select{background:var(--card2);border:none;border-radius:8px;color:#fff;padding:9px;font-size:1em;width:100%}
+.campos input:disabled{opacity:.4}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:.85em;margin:10px 0 0}
+.chk input{margin-top:3px}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0}
+.tile{background:var(--card2);border-radius:12px;padding:10px;text-align:center}
+.tile .v{display:block;font-size:1.15em;font-weight:700}
+.tile .l{font-size:.62em;color:var(--muted);text-transform:uppercase}
+.temp{font-size:2.4em;font-weight:800;text-align:center;margin:4px 0}
+.estado{text-align:center;font-weight:700;border-radius:10px;padding:8px;margin:6px 0}
+.n0{background:#14532d;color:#bbf7d0} .n1{background:var(--warn);color:#3b2a00} .n2{background:var(--danger);color:#fff} .nx{background:var(--card2);color:var(--muted)}
+.scroll{max-height:260px;overflow-y:auto;-webkit-overflow-scrolling:touch;border-radius:10px}
+.via{display:flex;justify-content:space-between;gap:8px;padding:10px;border-radius:10px;background:var(--card2);margin:6px 0;font-size:.85em;cursor:pointer}
+.via.sel{outline:2px solid var(--acc)} .via small{color:var(--muted)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+table{width:100%;border-collapse:collapse;font-size:.8em}
+th,td{padding:6px 8px;text-align:left;border-bottom:1px solid #283548;vertical-align:top}
+th{position:sticky;top:0;background:var(--card2);color:var(--muted);font-weight:600}
+.mini{padding:6px 12px;border:none;border-radius:8px;background:var(--card2);color:#fff;font-size:.78em;cursor:pointer}
+.ch{position:relative;height:190px}
+.ch canvas{touch-action:pan-y}
+.res{font-size:.86em;line-height:1.6}
+.res .k{color:var(--muted)}
+.legal{font-size:.74em;color:var(--muted);line-height:1.45}
+.legal b{color:var(--text)} .legal p{margin:6px 0}
+.legal summary{cursor:pointer;color:var(--text);font-weight:600;font-size:1.1em;padding:2px 0}
+a{color:#7dd3fc}
+.chip{display:inline-block;padding:3px 10px;border-radius:12px;background:#334155;font-size:.75em;margin:2px 3px 2px 0}
+.chip.m{background:#78350f;color:#fde68a} .chip.b{background:#14532d;color:#bbf7d0}
+.estilo{font-size:1.35em;font-weight:800;text-align:center;padding:9px;border-radius:10px;margin:6px 0}
+.asp{display:grid;grid-template-columns:42% 1fr 2.4em;gap:8px;align-items:center;font-size:.8em;margin:5px 0}
+.bar{height:10px;background:#334155;border-radius:5px;overflow:hidden}.bar>div{height:100%;border-radius:5px}
+.inp{background:#334155;border:none;border-radius:8px;color:#fff;padding:8px;font-size:.9em;width:55%}
+</style>
+</head>
+<body>
+
+<div class="row">
+  <h2>Nai Carga <small style="color:#94a3b8;font-weight:400">V1.5</small></h2>
+  <span><span id="bat" class="status" style="display:none;margin-right:6px"></span><span id="st" class="status">Desconectado</span></span>
+</div>
+<div class="row" id="apRow" style="display:none;margin:0 2px 8px">
+  <span class="lbl" style="margin:0">Aparato: <b id="apNom" style="color:#fff"></b> <span id="apId"></span></span>
+  <button class="mini" onclick="renombrar()">Cambiar nombre</button>
+</div>
+<button class="btn p" id="btnConn" onclick="conectarODesconectar()">CONECTAR APARATO</button>
+<div class="hint">El aparato siempre está visible (baliza cada 2 s). La primera vez el móvil pedirá el PIN.</div>
+
+<!-- Estado en vivo -->
+<div class="card" id="estadoCard" style="display:none">
+  <div class="row"><span class="lbl">Estado ahora <span id="esFuente"></span></span><button class="mini" id="btnBaliza" onclick="vigilarBaliza()">Vigilar sin conectar</button></div>
+  <div class="temp" id="esTemp">—</div>
+  <div class="estado nx" id="esNivel">Sin viaje en marcha</div>
+  <div class="grid" style="margin-bottom:0">
+    <div class="tile"><span class="v" id="esFuera">—</span><span class="l">Fuera de rango</span></div>
+    <div class="tile"><span class="v" id="esEv">—</span><span class="l">Eventos</span></div>
+    <div class="tile"><span class="v" id="esIncl">—</span><span class="l">Inclinación</span></div>
+  </div>
+  <div class="grid" style="margin-bottom:0">
+    <div class="tile"><span class="v" id="esHum">—</span><span class="l">Humedad</span></div>
+    <div class="tile"><span class="v" id="esLux">—</span><span class="l">Luz</span></div>
+    <div class="tile"><span class="v" id="esCaja">—</span><span class="l">Caja</span></div>
+  </div>
+  <div class="lbl" id="esDet" style="margin-top:8px"></div>
+</div>
+
+<!-- Nuevo viaje -->
+<div class="card" id="viajeCard">
+  <div class="lbl">Perfil de temperatura del viaje</div>
+  <div class="seg" id="perfiles">
+    <button data-p="1" onclick="elegirPerfil(1)">Congelado<small>≤ −18 °C</small></button>
+    <button data-p="2" onclick="elegirPerfil(2)">Refrigerado<small>2 a 8 °C</small></button>
+    <button data-p="3" onclick="elegirPerfil(3)">Ambiente<small>15 a 25 °C</small></button>
+    <button data-p="4" onclick="elegirPerfil(4)">Personalizado<small>tus límites</small></button>
+    <button data-p="0" onclick="elegirPerfil(0)">Sin temperatura<small>solo golpes</small></button>
+  </div>
+  <div class="campos">
+    <label>Rango: mínimo (°C)<input id="fMin" type="number" step="0.5" inputmode="decimal" oninput="editado()"></label>
+    <label>Rango: máximo (°C)<input id="fMax" type="number" step="0.5" inputmode="decimal" oninput="editado()"></label>
+    <label>Aviso si sale del rango más de (min)<input id="fRet" type="number" min="0" max="255" inputmode="numeric" oninput="editado()"></label>
+    <label>Crítica si en total pasa fuera (min, 0 = no)<input id="fAcu" type="number" min="0" max="255" inputmode="numeric" oninput="editado()"></label>
+    <label>Crítica por debajo de (°C)<input id="fCMin" type="number" step="0.5" inputmode="decimal" oninput="editado()"></label>
+    <label>Crítica por encima de (°C)<input id="fCMax" type="number" step="0.5" inputmode="decimal" oninput="editado()"></label>
+  </div>
+  <div class="hint" id="perfilTxt" style="margin-top:8px"></div>
+  <div class="lbl" style="margin-top:12px">Humedad (sensor SHT40)</div>
+  <div class="seg" id="hums">
+    <button data-h="0" onclick="elegirHum(0)">Sin control<small>solo la anota</small></button>
+    <button data-h="1" onclick="elegirHum(1)">Arte y antigüedades<small>40 a 60 %</small></button>
+    <button data-h="2" onclick="elegirHum(2)">Fruta y verdura<small>85 a 95 %</small></button>
+    <button data-h="3" onclick="elegirHum(3)">Personalizada<small>tus límites</small></button>
+  </div>
+  <div class="campos">
+    <label>Humedad mínima (%)<input id="hMin" type="number" min="0" max="100" inputmode="numeric" oninput="editadoHum()"></label>
+    <label>Humedad máxima (%)<input id="hMax" type="number" min="0" max="100" inputmode="numeric" oninput="editadoHum()"></label>
+    <label>Aviso si sale del rango más de (min)<input id="hRet" type="number" min="0" max="255" inputmode="numeric" oninput="editadoHum()"></label>
+    <span></span>
+  </div>
+  <div class="hint" id="humTxt" style="margin-top:8px"></div>
+  <label class="chk"><input type="checkbox" id="fLuz" onchange="elegir('luz',this.checked?1:0)">
+    <span>Avisar si abren la caja (sensor de luz BH1750). Empieza a vigilar cuando la caja lleva 10 segundos cerrada, así puedes iniciar el viaje con la caja aún abierta.</span></label>
+  <div class="lbl" style="margin-top:10px">Qué tan delicado es el paquete</div>
+  <div class="seg" id="frags">
+    <button data-f="0" onclick="elegir('frag',0)">Frágil<small>golpe ≥ 1,5 g</small></button>
+    <button data-f="1" onclick="elegir('frag',1)">Normal<small>golpe ≥ 2,5 g</small></button>
+    <button data-f="2" onclick="elegir('frag',2)">Robusto<small>golpe ≥ 4 g</small></button>
+  </div>
+  <div class="lbl" style="margin-top:10px">Vehículo (umbral de maniobra brusca)</div>
+  <div class="seg" id="vehs">
+    <button data-v="20" onclick="elegir('thrM',20)">Camión<small>0,20 g</small></button>
+    <button data-v="30" onclick="elegir('thrM',30)">Furgoneta<small>0,30 g</small></button>
+    <button data-v="40" onclick="elegir('thrM',40)">Coche<small>0,40 g</small></button>
+  </div>
+  <div class="campos">
+    <label>Registro de temperatura cada
+      <select id="fInt" onchange="elegir('int10',+this.value)">
+        <option value="3">30 s</option><option value="6">1 min</option><option value="12">2 min</option><option value="30">5 min</option>
+      </select></label>
+    <span></span>
+  </div>
+  <label class="chk"><input type="checkbox" id="fFlecha" onchange="elegir('flecha',this.checked?1:0)">
+    <span>La flecha del aparato (eje X del acelerómetro) mira hacia la parte delantera del vehículo. Así distingue frenadas, acelerones y curvas. Si no, la app intenta deducir la dirección de la marcha.</span></label>
+  <label class="chk"><input type="checkbox" id="fGps" onchange="elegir('gps',this.checked?1:0)">
+    <span>Guardar el GPS del móvil durante el viaje (velocidad y lugar de cada evento). Solo funciona con la app abierta y la pantalla encendida.</span></label>
+  <button class="btn ok" id="btnIni" onclick="iniciarViaje()" style="margin-top:12px">INICIAR VIAJE</button>
+  <button class="btn s" id="btnFin" onclick="terminarViaje()">Terminar viaje</button>
+  <div class="hint">Al iniciar, deja el aparato quieto 3 segundos en su posición de transporte: calibra hacia dónde está "abajo".</div>
+</div>
+
+<div class="row">
+  <button class="btn s" onclick="descargar()" style="flex:2">Descargar datos</button>
+  <button class="btn s" onclick="exportCSV()" style="flex:1">CSV</button>
+
+</div>
+<button class="btn d" onclick="borrar()">Borrar memoria del aparato</button>
+<button class="btn s" style="margin-top:8px" onclick="borrarHistorialMovil()">Borrar historial del móvil (este aparato)</button>
+<div id="msg" class="msg"></div>
+
+<div class="card">
+  <div class="lbl">Viajes (toca uno para verlo)</div>
+  <div id="viajes" class="scroll"><div class="hint">Sin datos todavía.</div></div>
+</div>
+
+<div class="estado n0" id="verifBanner" style="display:none"></div>
+<div class="card" id="detalle" style="display:none">
+  <div class="estado nx" id="dNivel"></div>
+  <div class="res" id="dRes"></div>
+  <div class="grid">
+    <div class="tile"><span class="v" id="dPunt">—</span><span class="l">Conducción /100</span></div>
+    <div class="tile"><span class="v" id="dMan">0</span><span class="l">Maniobras bruscas</span></div>
+    <div class="tile"><span class="v" id="dGol">0</span><span class="l">Golpes y caídas</span></div>
+  </div>
+  <div class="card" id="valCard" style="background:#0f172a">
+    <div class="row"><span class="lbl" style="margin:0">Valoración del conductor</span><input id="dCond" class="inp" placeholder="Nombre del conductor" oninput="guardarConductor()"></div>
+    <div id="valEstilo" class="estilo"></div>
+    <div id="valDesc" class="hint" style="text-align:center"></div>
+    <div id="valChips" style="margin:6px 0"></div>
+    <div id="valBarras"></div>
+    <div id="valRitmo" class="hint"></div>
+    <div id="valCons" class="res"></div>
+    <div id="valHist" class="hint" style="margin-top:8px"></div>
+  </div>
+  <div class="res" id="dSello"></div>
+  <div class="row"><button class="btn p" onclick="abrirCert()" style="flex:2">Certificado para el cliente</button><button class="btn s" onclick="informe()" style="flex:1">Informe técnico</button></div>
+  <div class="row" id="selloBtns"><button class="btn s" onclick="exportarSellado()" style="flex:1">Datos sellados</button><button class="btn s" onclick="verificarConAparato()" style="flex:1">Verificar con el aparato</button></div>
+  <div class="card" id="certForm" style="display:none;background:#0f172a">
+    <div class="lbl">Datos del envío para el certificado (se guardan con este viaje)</div>
+    <div class="campos">
+      <label>Cliente<input id="cCli"></label><label>Referencia / albarán<input id="cRef"></label>
+      <label>Origen<input id="cOri"></label><label>Destino<input id="cDes"></label>
+      <label>Mercancía<input id="cMer" placeholder="p. ej. óleo sobre lienzo, 120×80"></label><label>Conductor / matrícula<input id="cCon"></label>
+    </div>
+    <div class="campos" style="grid-template-columns:1fr"><label>Observaciones<input id="cObs"></label></div>
+    <label class="chk"><input type="checkbox" id="cPunt"><span>Incluir la puntuación de conducción y las maniobras bruscas</span></label>
+    <div class="row"><button class="btn ok" onclick="generarCert()" style="flex:2">Generar certificado</button><button class="btn s" onclick="$('certForm').style.display='none'" style="flex:1">Cancelar</button></div>
+  </div>
+  <div class="row" style="margin-top:8px"><span class="lbl">Temperatura (°C). Pellizca para ampliar.</span><button class="mini" onclick="verTodo()">Ver todo</button></div>
+  <div class="ch"><canvas id="chTemp"></canvas></div>
+  <div id="humBox"><div class="lbl" style="margin-top:12px">Humedad (%). Las líneas verdes marcan el rango vigilado.</div>
+  <div class="ch"><canvas id="chHum"></canvas></div></div>
+  <div class="lbl" style="margin-top:12px">Vibración (g) y eventos: ● maniobra · ▲ bache · ■ golpe/caída · ✕ vuelco</div>
+  <div class="ch"><canvas id="chVib"></canvas></div>
+  <div class="lbl" style="margin-top:12px">Golpes, caídas y baches: fuerza real de cada uno (g). Línea roja = umbral de golpe del paquete · línea ámbar = umbral de bache.</div>
+  <div class="ch" id="golBox"><canvas id="chGol"></canvas></div>
+  <div class="hint" id="golTxt"></div>
+  <div class="lbl" style="margin-top:12px">Alarmas de temperatura</div>
+  <div class="scroll" style="max-height:200px"><table><thead><tr><th>Hora</th><th>Qué pasó</th><th>Valor</th></tr></thead><tbody id="tAl"></tbody></table></div>
+  <div class="lbl" style="margin-top:12px">Eventos de conducción y del paquete</div>
+  <div class="scroll" style="max-height:300px"><table><thead><tr><th>Hora</th><th>Evento</th><th>Detalle</th></tr></thead><tbody id="tEv"></tbody></table></div>
+</div>
+
+<details class="card" id="empresaCard">
+  <summary class="lbl" style="font-size:.9em;cursor:pointer">Datos de tu empresa (salen en los certificados)</summary>
+  <div class="campos">
+    <label>Nombre de la empresa<input id="eNom" oninput="guardarEmpresa()"></label><label>CIF / NIF<input id="eCif" oninput="guardarEmpresa()"></label>
+    <label>Teléfono / email<input id="eCon" oninput="guardarEmpresa()"></label><label>Dirección o web<input id="eDir" oninput="guardarEmpresa()"></label>
+  </div>
+  <div class="row" style="margin-top:10px"><label class="mini" style="padding:10px">Elegir logo<input type="file" id="eLogo" accept="image/*" style="display:none" onchange="cargarLogo(this)"></label>
+    <img id="eLogoPrev" style="max-height:48px;max-width:50%;display:none;background:#fff;border-radius:6px;padding:4px"><button class="mini" onclick="quitarLogo()">Quitar logo</button></div>
+</details>
+<details class="card" id="verifCard">
+  <summary class="lbl" style="font-size:.9em;cursor:pointer">Verificar un certificado (fabricante)</summary>
+  <div class="hint">Carga el archivo de «Datos sellados» que acompaña al certificado y escribe la frase de CLAVE_MAESTRA del firmware. La frase no se guarda ni sale del móvil.</div>
+  <div class="campos" style="grid-template-columns:1fr">
+    <label>Archivo de datos sellados (.json)<input type="file" id="vArch" accept=".json,application/json"></label>
+    <label>Frase de la clave maestra<input type="password" id="vClave" autocomplete="off"></label>
+  </div>
+  <button class="btn p" onclick="verificarFabricante()">Verificar</button>
+  <div class="res" id="vRes"></div>
+</details>
+
+<details class="card legal">
+  <summary>Protección de datos — RGPD y LOPDGDD</summary>
+  <p><b>Qué datos se tratan.</b> Temperatura, movimientos y golpes del paquete con su fecha y hora. Si activas el GPS, también la posición y la velocidad del móvil. Las maniobras y el GPS describen la forma de conducir de una persona: son datos personales del conductor.</p>
+  <p><b>Dónde se tratan.</b> Solo en este móvil; la app no envía nada a ningún servidor. Los viajes descargados se guardan en el móvil, separados por aparato, y se borran con «Borrar historial del móvil» o borrando los datos del sitio en el navegador. Los CSV e informes que exportes quedan bajo tu custodia.</p>
+  <p><b>Conductores asalariados.</b> Si se usa para controlar a trabajadores, la empresa debe informarles antes, de forma expresa, clara e inequívoca, de la existencia del sistema y de sus características (art. 90 de la Ley Orgánica 3/2018 y art. 20.3 del Estatuto de los Trabajadores), y cumplir el RGPD (información previa, finalidad limitada, conservación limitada y derechos de acceso, rectificación, supresión y oposición).</p>
+  <p><b>Terceros.</b> La página se sirve desde GitHub Pages y carga las librerías de gráficas desde jsDelivr; esos servicios reciben tu dirección IP, pero no los datos del aparato. Los enlaces «ver en el mapa» abren Google Maps con esa posición.</p>
+  <p><b>Seguridad.</b> La conexión Bluetooth exige PIN y va cifrada. La baliza emite sin cifrar la temperatura, el estado de la alarma y la batería, para poder verlos sin conectar.</p>
+  <p><b>Responsable y reclamaciones.</b> Responsable: [NOMBRE Y CONTACTO DEL RESPONSABLE]. Puedes reclamar ante la Agencia Española de Protección de Datos (www.aepd.es).</p>
+</details>
+
+<script>
+// ---- UUID: deben coincidir con el firmware NAI Carga ----
+const SVC ='19b20000-e8f2-537e-4f6c-d104768a1214';
+const DATA='19b20001-e8f2-537e-4f6c-d104768a1214';
+const TIME='19b20002-e8f2-537e-4f6c-d104768a1214';
+const CTRL='19b20003-e8f2-537e-4f6c-d104768a1214';
+const BATT='19b20004-e8f2-537e-4f6c-d104768a1214';
+const FECHA_VALIDA=1600000000;
+const SIN_DATO=0x7FFF;
+const PERFILES={
+  1:{nom:'Congelado',min:-35,max:-15,ret:15,acu:60,cmin:-40,cmax:-12,txt:'Objetivo −18 °C o menos. Se toleran subidas breves hasta −15 °C (normativa europea de congelados); aviso si pasa de −15 °C más de 15 min; crítica por encima de −12 °C.'},
+  2:{nom:'Refrigerado',min:2,max:8,ret:10,acu:30,cmin:0,cmax:15,txt:'Rango 2 a 8 °C. Aviso si sale más de 10 min seguidos; crítica si baja de 0 °C (se congela), si pasa de 15 °C o si suma 30 min fuera de rango.'},
+  3:{nom:'Ambiente controlado',min:15,max:25,ret:30,acu:120,cmin:5,cmax:30,txt:'Rango 15 a 25 °C. Aviso si sale más de 30 min; crítica por debajo de 5 °C, por encima de 30 °C o con 2 h fuera de rango.'},
+  4:{nom:'Personalizado',min:0,max:10,ret:10,acu:30,cmin:-5,cmax:15,txt:'Pon tus límites. Se guardan para la próxima vez.'},
+  0:{nom:'Sin temperatura',txt:'No vigila la temperatura (sigue anotándola si hay sonda). Solo maniobras, golpes, caídas y vuelcos.'}
+};
+const FRAG=['Frágil','Normal','Robusto'], THR_B=[0.5,0.8,1.2], THR_G=[1.5,2.5,4.0];
+const HUMS={1:{nom:'Arte y antigüedades',min:40,max:60,ret:30,txt:'Madera, lienzos, papel y pintura: lo habitual en museos es mantenerse entre 40 y 60 %. Aviso si sale de ese rango más de 30 min.'},
+  2:{nom:'Fruta y verdura',min:85,max:95,ret:60,txt:'La mayoría de frutas y verduras frescas se conservan entre 85 y 95 %. Aviso si sale más de 1 hora.'},
+  3:{nom:'Personalizada',min:30,max:70,ret:30,txt:'Pon tus límites. Se guardan para la próxima vez.'},0:{nom:'Sin control',txt:'Anota la humedad si hay sensor, pero no avisa.'}};
+const CAUSA=['Vuelve a su rango','Por encima del rango','Por debajo del rango','Por encima del límite crítico',
+  'Por debajo del límite crítico','Demasiado tiempo fuera de rango en total','Temperatura anormal (fallo del equipo de frío o de la sonda)','La sonda no responde',
+  'Humedad por encima del rango','Humedad por debajo del rango','La humedad vuelve a su rango'];
+const NIVEL=['Sin alarma','AVISO','ALARMA CRÍTICA'];
+
+let device, chData, chTime, chCtrl, chBatt, conectando=false;
+let recibidos=[], downloading=false, lastRx=0, malos=0, rxIndex=0, rxDesde=0;
+let history=[], viajes=[], sel=-1, gpsHist=[];
+const $=id=>document.getElementById(id);
+const say=t=>{$('msg').textContent=t;};
+const coma=(x,d=1)=>Number(x).toFixed(d).replace('.',',');
+const grados=c=>c===SIN_DATO?'—':coma(c/100,1)+' °C';
+
+// ================= Conexión =================
+function conectarODesconectar(){
+  if(device&&device.gatt&&device.gatt.connected){ say('Desconectando…'); device.gatt.disconnect(); }
+  else connect();
+}
+async function connect(){
+  if(!navigator.bluetooth){ say('Este navegador no tiene Bluetooth web. Usa Chrome en Android o en PC.'); return; }
+  try{
+    say('Buscando…');
+    device=await navigator.bluetooth.requestDevice({filters:[{services:[SVC]},{namePrefix:'NAC'}],optionalServices:[SVC],optionalManufacturerData:[0xFFFF]});
+    device.addEventListener('gattserverdisconnected',()=>{ setStatus(false); if(!conectando) say('Desconectado.'); });
+    conectando=true;
+    let err=null, ok=false;
+    for(let intento=1; intento<=5 && !ok; intento++){
+      try{
+        say(intento===1?'Conectando…':'Reintentando ('+intento+' de 5)… Si el móvil pide vincular (mira la barra de notificaciones), introduce el PIN.');
+        const srv=await device.gatt.connect();
+        const s=await srv.getPrimaryService(SVC);
+        chTime=await s.getCharacteristic(TIME); chData=await s.getCharacteristic(DATA);
+        chCtrl=await s.getCharacteristic(CTRL); chBatt=await s.getCharacteristic(BATT);
+        const b=new Uint8Array(4); new DataView(b.buffer).setUint32(0,Math.floor(Date.now()/1000),true);
+        await chTime.writeValue(b);
+        await chData.startNotifications();
+        chData.addEventListener('characteristicvaluechanged',onData);
+        ok=true;
+      }catch(e){ err=e; await new Promise(r=>setTimeout(r,4000)); }
+    }
+    conectando=false;
+    if(!ok){ try{ if(device.gatt.connected) device.gatt.disconnect(); }catch(e){}
+      say('No se pudo conectar ('+(err?err.message:'error')+'). Empareja el aparato en Ajustes > Bluetooth con el PIN y vuelve a intentarlo.'); return; }
+    setStatus(true);
+    say('Conectado a '+(device.name||'aparato')+'. Hora sincronizada.');
+    await identificar(); leerBateria(); pedirEstado();
+  }catch(e){ say('No se pudo conectar: '+e.message); }
+}
+function conectado(){ return chCtrl&&device&&device.gatt&&device.gatt.connected; }
+function setStatus(on){
+  if(!on) $('bat').style.display='none';
+  $('st').textContent=on?'Conectado':'Desconectado'; $('st').className='status'+(on?' on':'');
+  $('btnConn').textContent=on?'DESCONECTAR':'CONECTAR APARATO'; $('btnConn').className='btn '+(on?'s':'p');
+  if(on) $('estadoCard').style.display='block';
+}
+async function leerBateria(){
+  const el=$('bat'); if(!chBatt){ el.style.display='none'; return; }
+  try{
+    const v=await chBatt.readValue(), mv=v.getUint16(0,true), p=v.getUint8(2);
+    if(p===255) el.textContent='Con USB';
+    else{ el.textContent='Batería '+p+' %'; el.style.background=p<=15?'#ef4444':(p<=35?'#f59e0b':'#334155'); el.style.color=p<=35&&p>15?'#3b2a00':'#f1f5f9'; }
+    el.title=(mv/1000).toFixed(2)+' V'; el.style.display='inline-block';
+  }catch(e){ el.style.display='none'; }
+}
+
+// ================= Paquetes de 20 bytes =================
+function onData(e){
+  const t=e.target.value;
+  for(let o=0;o+20<=t.byteLength;o+=20) paquete(new DataView(t.buffer,t.byteOffset+o,20));
+}
+function paquete(v){
+  let sum=0; for(let i=0;i<18;i++) sum=(sum+v.getUint8(i))&0xFFFF;
+  const t=v.getUint32(0,true), bueno=sum===v.getUint16(18,true);
+  if(bueno && t===0xFFFFFFFD){ infoDato(v); return; }
+  if(bueno && t===0xFFFFFFFC){ estadoDato(v); return; }
+  if(bueno && t===0xFFFFFFFB){ ambienteDato(v); return; }
+  if(bueno && t===0xFFFFFFFA){ verifDato(v); return; }
+  if(!downloading) return;
+  const n=rxDesde+rxIndex; rxIndex++; lastRx=Date.now();
+  if(!bueno){ malos++; return; }
+  const r=decodificar(v,n); if(r) recibidos.push(r);
+  say('Descargando… '+recibidos.length+' registros');
+}
+const hexDe=(v,a,b)=>{ let h=''; for(let i=a;i<b;i++) h+=v.getUint8(i).toString(16).padStart(2,'0'); return h; };
+function decodificar(v,n){
+  const t=v.getUint32(0,true), tipo=v.getUint8(4), r={n,t,tipo,raw:hexDe(v,0,20)};
+  if(tipo===1){ r.temp=v.getInt16(5,true); r.vib=v.getUint16(7,true); r.pico=v.getUint16(9,true);
+    r.nMan=v.getUint8(11); r.nBache=v.getUint8(12); r.nGolpe=v.getUint8(13); r.incl=v.getUint8(14); r.al=v.getUint8(15); r.bat=v.getUint8(16); r.hum=v.getUint8(17); }
+  else if(tipo===2){ r.sub=v.getUint8(5); r.pico=v.getUint16(6,true); r.dur=v.getUint16(8,true);
+    r.hx=v.getInt16(10,true); r.hy=v.getInt16(12,true); r.vv=v.getInt16(14,true); r.incl=v.getUint8(16); }
+  else if(tipo===3){ r.perfil=v.getUint8(5); r.tMin=v.getInt16(6,true); r.tMax=v.getInt16(8,true); r.cMin=v.getInt16(10,true);
+    r.cMax=v.getInt16(12,true); r.ret=v.getUint8(14); r.acu=v.getUint8(15); r.thrM=v.getUint8(16); r.op=v.getUint8(17); }
+  else if(tipo===4){ r.nivel=v.getUint8(5); r.causas=v.getUint8(6); r.tMinMed=v.getInt16(7,true); r.tMaxMed=v.getInt16(9,true);
+    r.fueraMin=v.getUint16(11,true); r.nEv=v.getUint16(13,true); r.causasX=v.getUint8(15); r.nAper=v.getUint8(16); r.humMax=v.getUint8(17); }
+  else if(tipo===7){ r.nRegs=v.getUint8(5)|(v.getUint8(6)<<8)|(v.getUint8(7)<<16); r.mac=hexDe(v,8,18); }
+  else if(tipo===6){ r.humMin=v.getUint8(5); r.humMax=v.getUint8(6); r.humRet=v.getUint8(7); r.amb=v.getUint8(8); r.sens=v.getUint8(9); }
+  else if(tipo===5){ r.nivel=v.getUint8(5); r.causa=v.getUint8(6); r.temp=v.getInt16(7,true); r.fuera10=v.getUint16(9,true); }
+  else return null;
+  return r;
+}
+
+// ================= Aparato e identificación =================
+let aparato={key:null,serie:'',nombre:'',next:0,ext:false,capMB:0}, infoRes=null;
+function aliasDe(k){ try{ return localStorage.getItem('nac_alias_'+k)||''; }catch(e){ return ''; } }
+function infoDato(v){
+  const id=v.getUint32(4,true), ver=v.getFloat32(8,true), next=Math.round(v.getFloat32(12,true)), ext=v.getUint8(16)===1, cap=v.getUint8(17);
+  if(infoRes){ infoRes({key:id.toString(16).toUpperCase().padStart(8,'0'),serie:'NAC-'+(id&0xFFFF).toString(16).toUpperCase().padStart(4,'0'),
+    ver,next,ext,capMB:ext?Math.pow(2,cap)/1048576:0}); infoRes=null; }
+}
+async function identificar(){
+  let info=null;
+  try{ const espera=new Promise(r=>{ infoRes=r; setTimeout(()=>{ if(infoRes){ infoRes(null); infoRes=null; } },2500); });
+       await chCtrl.writeValue(new Uint8Array([0x07])); info=await espera; }catch(e){}
+  if(info) fijarAparato(info.key,info.serie,info);
+  else say('El aparato no se identifica: ¿lleva el firmware NAI Carga?');
+}
+function fijarAparato(key,serie,info){
+  aparato={key,serie,nombre:aliasDe(key)||serie,next:info?info.next:0,ext:info?info.ext:false,capMB:info?info.capMB:0,conInfo:!!info};
+  try{ localStorage.setItem('nac_ultimo',JSON.stringify({key,serie})); }catch(e){}
+  $('apRow').style.display='flex'; $('apNom').textContent=aparato.nombre;
+  $('apId').textContent=((aparato.nombre!==serie)?'('+serie+') ':'')+(info?(aparato.ext?'· memoria externa '+aparato.capMB+' MB':'· memoria interna (~13 h)'):'');
+  Promise.all([histCargar(key),gpsCargar(key)]).then(([h,g])=>{ if(aparato.key===key){ history=h; gpsHist=g; construirViajes(); } });
+}
+function renombrar(){
+  if(!aparato.key){ say('Conecta primero el aparato.'); return; }
+  const n=prompt('Nombre para '+aparato.serie+' (p. ej. "Nevera 1"; vacío = sin nombre):',aliasDe(aparato.key));
+  if(n===null) return;
+  try{ if(n.trim()) localStorage.setItem('nac_alias_'+aparato.key,n.trim().slice(0,24)); else localStorage.removeItem('nac_alias_'+aparato.key); }catch(e){}
+  fijarAparato(aparato.key,aparato.serie,aparato.conInfo?aparato:null);
+}
+
+// ================= Estado en vivo =================
+let estado=null, estadoT=null;
+async function pedirEstado(){
+  clearTimeout(estadoT);
+  if(!conectado()) return;
+  if(!downloading && document.visibilityState==='visible'){ try{ await chCtrl.writeValue(new Uint8Array([0x12])); }catch(e){} }
+  estadoT=setTimeout(pedirEstado,5000);
+}
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') pedirEstado(); });
+function estadoDato(v){
+  estado={temp:v.getInt16(4,true),viaje:v.getUint8(6),nivelMax:v.getUint8(7),fuera:v.getUint8(8)&1,nivelAhora:v.getUint8(8)>>1,
+    incl:v.getUint8(9),fuera10:v.getUint16(10,true),nEv:v.getUint16(12,true),sonda:v.getUint8(14),bat:v.getUint8(15),causa:v.getUint8(16),perfil:v.getUint8(17)};
+  pintarEstado('conectado'); pintarAmbiente();
+  if(estado.viaje && opc.gps && gpsWatch===null) gpsIniciar();      // app reabierta en mitad del viaje
+}
+let amb=null;
+function ambienteDato(v){
+  amb={hum:v.getUint16(4,true),lux:v.getUint16(8,true),abierta:v.getUint8(10),armado:v.getUint8(11),sens:v.getUint8(12),humFuera:v.getUint8(13),amb:v.getUint8(14),nAper:v.getUint8(15)};
+  pintarAmbiente();
+}
+function pintarAmbiente(){
+  const a=amb; if(!a) return;
+  $('esHum').textContent=a.hum<=10000?Math.round(a.hum/100)+' %':(a.sens&1?'—':'sin sensor');
+  $('esHum').style.color=a.humFuera?'#f59e0b':'';
+  $('esLux').textContent=a.lux!==undefined&&a.lux!==0xFFFF?Math.round(a.lux)+' lux':(a.sens&2?'—':'sin sensor');
+  const ce=$('esCaja');
+  if(!estado||!estado.viaje||!(a.amb&1)) { ce.textContent=a.sens&2||a.lux!==undefined?'sin vigilar':'—'; ce.style.color=''; }
+  else if(!a.armado){ ce.textContent='esperando cierre'; ce.style.color=''; }
+  else { ce.textContent=a.abierta?'ABIERTA':'cerrada'+(a.nAper?' ('+a.nAper+' aperturas)':''); ce.style.color=a.abierta?'#ef4444':''; }
+}
+function pintarEstado(fuente){
+  const e=estado; if(!e) return;
+  $('estadoCard').style.display='block';
+  $('esFuente').textContent=fuente==='baliza'?'(por la baliza, sin conectar)':'';
+  $('esTemp').textContent=e.sonda?grados(e.temp):'Sin sonda';
+  $('esTemp').style.color=e.viaje&&e.fuera?'#f59e0b':'';
+  const el=$('esNivel');
+  if(!e.viaje){ el.className='estado nx'; el.textContent='Sin viaje en marcha'; }
+  else{ el.className='estado n'+Math.min(2,e.nivelMax);
+    el.textContent=(e.nivelMax?NIVEL[e.nivelMax]+(e.causa!==undefined&&e.causa>0?': '+CAUSA[e.causa].toLowerCase():''):'Viaje en marcha · todo correcto')+
+      (e.perfil!==undefined&&PERFILES[e.perfil]?' · '+PERFILES[e.perfil].nom:''); }
+  $('esFuera').textContent=e.viaje&&e.fuera10!==undefined?coma(e.fuera10/10,1)+' min':'—';
+  $('esEv').textContent=e.viaje&&e.nEv!==undefined?e.nEv:'—';
+  $('esIncl').textContent=e.viaje&&e.incl!==undefined?e.incl+'°':'—';
+  $('esDet').textContent=e.viaje?(e.fuera?'Ahora mismo está FUERA de rango. ':'Ahora mismo en rango. ')+
+    (e.nivelMax?'La alarma queda marcada hasta terminar el viaje (el LED parpadea).':''):'';
+  $('btnIni').textContent=e.viaje?'EMPEZAR OTRO VIAJE (termina el actual)':'INICIAR VIAJE';
+}
+// Baliza: Chrome necesita activar chrome://flags → "Experimental Web Platform features"
+let vigilando=false;
+async function vigilarBaliza(){
+  if(!device){ say('Conecta una vez el aparato en esta sesión; después podrás vigilarlo sin conectar.'); return; }
+  if(!device.watchAdvertisements){ say('Este Chrome no lee balizas. Actívalo en chrome://flags → "Experimental Web Platform features", o conecta para ver el estado.'); return; }
+  try{
+    if(device.gatt.connected) device.gatt.disconnect();
+    if(!vigilando){
+      device.addEventListener('advertisementreceived',ev=>{
+        const m=ev.manufacturerData&&ev.manufacturerData.get(0xFFFF); if(!m||m.byteLength<7) return;
+        if(m.getUint8(0)!==78||m.getUint8(1)!==67) return;          // "NC"
+        const f=m.getUint8(5);
+        estado={temp:m.getInt16(2,true),nivelMax:m.getUint8(4),viaje:f&1,fuera:(f>>1)&1,sonda:(f&4)?0:1,bat:m.getUint8(6)};
+        const h=m.byteLength>=8?m.getUint8(7):255;
+        amb=Object.assign(amb||{amb:1,armado:1},{hum:h<=100?h*100:0xFFFF,abierta:(f>>3)&1,lux:undefined});
+        pintarEstado('baliza'); pintarAmbiente();
+      });
+    }
+    await device.watchAdvertisements(); vigilando=true;
+    say('Vigilando la baliza (cada ~2 s). Para descargar o cambiar el viaje, vuelve a conectar.');
+  }catch(e){ say('No se pudo vigilar la baliza: '+e.message); }
+}
+
+// ================= Perfil y opciones del viaje =================
+let opc={perfil:2,frag:1,thrM:30,int10:6,flecha:0,gps:0,personal:null,humP:0,humPers:null,luz:1};
+try{ const g=JSON.parse(localStorage.getItem('nac_opc')||'null'); if(g) opc=Object.assign(opc,g); }catch(e){}
+function guardarOpc(){ try{ localStorage.setItem('nac_opc',JSON.stringify(opc)); }catch(e){} }
+function valoresPerfil(p){ return (p===4&&opc.personal)?opc.personal:PERFILES[p]; }
+function pintarPerfil(){
+  document.querySelectorAll('#perfiles button').forEach(b=>b.className=(+b.dataset.p===opc.perfil)?'on':'');
+  document.querySelectorAll('#frags button').forEach(b=>b.className=(+b.dataset.f===opc.frag)?'on':'');
+  document.querySelectorAll('#vehs button').forEach(b=>b.className=(+b.dataset.v===opc.thrM)?'on':'');
+  $('fInt').value=String(opc.int10); $('fFlecha').checked=!!opc.flecha; $('fGps').checked=!!opc.gps;
+  const P=valoresPerfil(opc.perfil), sin=opc.perfil===0;
+  [['fMin','min'],['fMax','max'],['fRet','ret'],['fAcu','acu'],['fCMin','cmin'],['fCMax','cmax']].forEach(([id,k])=>{
+    $(id).disabled=sin; $(id).value=sin?'':P[k]; });
+  pintarHum();
+  $('perfilTxt').textContent=PERFILES[opc.perfil].txt+(sin?'':' En cualquier perfil: crítica inmediata si baja de −40 °C o pasa de 40 °C, o si la sonda deja de responder.');
+}
+function valoresHum(h){ return (h===3&&opc.humPers)?opc.humPers:HUMS[h]; }
+function pintarHum(){
+  document.querySelectorAll('#hums button').forEach(b=>b.className=(+b.dataset.h===opc.humP)?'on':'');
+  const H=valoresHum(opc.humP), sin=opc.humP===0;
+  [['hMin','min'],['hMax','max'],['hRet','ret']].forEach(([id,k])=>{ $(id).disabled=sin; $(id).value=sin?'':H[k]; });
+  $('humTxt').textContent=HUMS[opc.humP].txt;
+  $('fLuz').checked=!!opc.luz;
+}
+function elegirHum(h){ opc.humP=h; guardarOpc(); pintarHum(); }
+function editadoHum(){
+  if(opc.humP===0) return;
+  const H={min:+$('hMin').value,max:+$('hMax').value,ret:+$('hRet').value}, base=HUMS[opc.humP];
+  if(opc.humP!==3 && ['min','max','ret'].every(k=>H[k]===base[k])) return;
+  opc.humPers=H; if(opc.humP!==3){ opc.humP=3; document.querySelectorAll('#hums button').forEach(b=>b.className=(+b.dataset.h===3)?'on':''); $('humTxt').textContent=HUMS[3].txt; }
+  guardarOpc();
+}
+function elegirPerfil(p){ opc.perfil=p; guardarOpc(); pintarPerfil(); }
+function elegir(k,v){ opc[k]=v; guardarOpc(); pintarPerfil(); }
+function editado(){                                   // tocar un valor convierte el perfil en personalizado
+  if(opc.perfil===0) return;
+  const P={min:+$('fMin').value,max:+$('fMax').value,ret:+$('fRet').value,acu:+$('fAcu').value,cmin:+$('fCMin').value,cmax:+$('fCMax').value};
+  const base=PERFILES[opc.perfil];
+  if(opc.perfil!==4 && ['min','max','ret','acu','cmin','cmax'].every(k=>P[k]===base[k])) return;
+  opc.personal=P; if(opc.perfil!==4){ opc.perfil=4; document.querySelectorAll('#perfiles button').forEach(b=>b.className=(+b.dataset.p===4)?'on':''); $('perfilTxt').textContent=PERFILES[4].txt; }
+  guardarOpc();
+}
+pintarPerfil();
+
+async function iniciarViaje(){
+  if(!conectado()){ say('Conecta primero.'); return; }
+  const sin=opc.perfil===0;
+  const P=sin?{min:-40,max:40,ret:0,acu:0,cmin:-40,cmax:40}:{min:+$('fMin').value,max:+$('fMax').value,ret:+$('fRet').value,acu:+$('fAcu').value,cmin:+$('fCMin').value,cmax:+$('fCMax').value};
+  if(!sin){
+    if([P.min,P.max,P.cmin,P.cmax,P.ret,P.acu].some(x=>!isFinite(x))){ say('Rellena todos los valores del perfil.'); return; }
+    if(P.min>=P.max){ say('El mínimo del rango debe ser menor que el máximo.'); return; }
+    if(P.cmin>P.min||P.cmax<P.max){ say('Los límites críticos deben quedar fuera del rango (crítica baja ≤ mínimo; crítica alta ≥ máximo).'); return; }
+    if(P.ret<0||P.ret>255||P.acu<0||P.acu>255){ say('Los minutos van de 0 a 255.'); return; }
+  }
+  const conHum=opc.humP!==0, Hh=conHum?{min:+$('hMin').value,max:+$('hMax').value,ret:+$('hRet').value}:{min:0,max:0,ret:0};
+  if(conHum){
+    if([Hh.min,Hh.max,Hh.ret].some(x=>!isFinite(x))||Hh.min<0||Hh.max>100||Hh.min>=Hh.max){ say('Revisa la humedad: mínimo menor que máximo, entre 0 y 100 %.'); return; }
+    if(Hh.ret<0||Hh.ret>255){ say('Los minutos de aviso de humedad van de 0 a 255.'); return; }
+  }
+  if(estado&&estado.viaje&&!confirm('Hay un viaje en marcha. ¿Terminarlo y empezar uno nuevo?')) return;
+  const b=new Uint8Array(19), dv=new DataView(b.buffer);
+  b[0]=0x10; b[1]=opc.perfil;
+  dv.setInt16(2,Math.round(P.min*100),true); dv.setInt16(4,Math.round(P.max*100),true);
+  dv.setInt16(6,Math.round(P.cmin*100),true); dv.setInt16(8,Math.round(P.cmax*100),true);
+  b[10]=Math.round(P.ret); b[11]=Math.round(P.acu); b[12]=opc.thrM; b[13]=(opc.frag&3)|(opc.flecha?4:0); b[14]=opc.int10;
+  b[15]=Math.round(Hh.min); b[16]=Math.round(Hh.max); b[17]=Math.round(Hh.ret); b[18]=(opc.luz?1:0)|(conHum?2:0);
+  try{
+    await chCtrl.writeValue(b);
+    say('Calibrando: no muevas el aparato 3 segundos…');
+    setTimeout(()=>{ say('Viaje iniciado ('+PERFILES[opc.perfil].nom+'). El LED destella cada 30 s mientras todo va bien.'); pedirEstado(); },3500);
+    if(opc.gps) gpsIniciar();
+  }catch(e){ say('No se pudo iniciar: '+e.message); }
+}
+async function terminarViaje(){
+  if(!conectado()){ say('Conecta primero.'); return; }
+  if(!confirm('¿Terminar el viaje en marcha?')) return;
+  try{ await chCtrl.writeValue(new Uint8Array([0x11])); gpsParar(); say('Viaje terminado. Descarga los datos para ver el informe.'); setTimeout(pedirEstado,800); }
+  catch(e){ say('No se pudo terminar: '+e.message); }
+}
+
+// ================= GPS del móvil (opcional) =================
+let gpsWatch=null, gpsUlt=0, wakeLock=null;
+async function gpsIniciar(){
+  if(!navigator.geolocation){ say('Este móvil no da la posición al navegador.'); return; }
+  if(gpsWatch!==null) return;
+  gpsWatch=navigator.geolocation.watchPosition(p=>{
+    const t=Math.floor(p.timestamp/1000); if(t-gpsUlt<5||!aparato.key) return; gpsUlt=t;
+    const g={t,lat:p.coords.latitude,lon:p.coords.longitude,v:p.coords.speed,acc:p.coords.accuracy};
+    gpsHist.push(g); gpsGuardar(aparato.key,g);
+  },e=>say('GPS: '+e.message),{enableHighAccuracy:true,maximumAge:5000});
+  try{ if(navigator.wakeLock) wakeLock=await navigator.wakeLock.request('screen'); }catch(e){}
+}
+function gpsParar(){ if(gpsWatch!==null){ navigator.geolocation.clearWatch(gpsWatch); gpsWatch=null; } try{ if(wakeLock) wakeLock.release(); }catch(e){} wakeLock=null; }
+document.addEventListener('visibilitychange',async()=>{ if(document.visibilityState==='visible'&&gpsWatch!==null&&navigator.wakeLock){ try{ wakeLock=await navigator.wakeLock.request('screen'); }catch(e){} } });
+function gpsCerca(t){
+  if(t<FECHA_VALIDA||!gpsHist.length) return null;
+  let best=null, bd=31;
+  for(const g of gpsHist){ const d=Math.abs(g.t-t); if(d<bd){ bd=d; best=g; } }
+  return best;
+}
+
+// ================= Historial en el móvil (IndexedDB) =================
+let db=null;
+function abrirDB(){
+  return new Promise(res=>{
+    if(db) return res(db); if(!window.indexedDB) return res(null);
+    const r=indexedDB.open('nac',1);
+    r.onupgradeneeded=()=>{ r.result.createObjectStore('reg',{keyPath:['ap','n']}); r.result.createObjectStore('gps',{keyPath:['ap','t']}); };
+    r.onsuccess=()=>{ db=r.result; res(db); }; r.onerror=()=>res(null);
+  });
+}
+const rango=k=>IDBKeyRange.bound([k,-Infinity],[k,Infinity]);
+async function guardarEn(store,key,arr){
+  if(!arr.length) return true; const d=await abrirDB(); if(!d) return false;
+  return new Promise(res=>{ try{ const tx=d.transaction(store,'readwrite'), st=tx.objectStore(store);
+    arr.forEach(x=>st.put(Object.assign({ap:key},x))); tx.oncomplete=()=>res(true); tx.onerror=()=>res(false); tx.onabort=()=>res(false);
+  }catch(e){ res(false); } });
+}
+async function cargarDe(store,key){
+  const d=await abrirDB(); if(!d) return [];
+  return new Promise(res=>{ const q=d.transaction(store).objectStore(store).getAll(rango(key));
+    q.onsuccess=()=>res(q.result.map(x=>{ const y=Object.assign({},x); delete y.ap; return y; })); q.onerror=()=>res([]); });
+}
+const histGuardar=(k,a)=>guardarEn('reg',k,a), histCargar=k=>cargarDe('reg',k);
+const gpsGuardar=(k,g)=>guardarEn('gps',k,[g]), gpsCargar=k=>cargarDe('gps',k);
+async function histBorrar(key){
+  const d=await abrirDB(); if(!d) return;
+  for(const st of ['reg','gps']) await new Promise(res=>{ const tx=d.transaction(st,'readwrite'); tx.objectStore(st).delete(rango(key)); tx.oncomplete=res; tx.onerror=res; });
+}
+function ptrLeer(){ try{ return +(localStorage.getItem('nac_ptr_'+aparato.key)||0); }catch(e){ return 0; } }
+function ptrGuardar(n){ try{ localStorage.setItem('nac_ptr_'+aparato.key,String(n)); }catch(e){} }
+async function borrarHistorialMovil(){
+  if(!aparato.key){ say('No hay aparato seleccionado.'); return; }
+  if(!confirm('¿Borrar del móvil todo el historial de '+aparato.nombre+' (viajes y GPS)? Lo que siga en el aparato se podrá volver a descargar.')) return;
+  await histBorrar(aparato.key); ptrGuardar(0); history=[]; gpsHist=[]; construirViajes(); say('Historial del móvil borrado.');
+}
+
+// ================= Descarga y borrado =================
+async function descargar(){
+  if(!conectado()){ say('Conecta primero.'); return; }
+  if(downloading) return;
+  try{ const espera=new Promise(r=>{ infoRes=r; setTimeout(()=>{ if(infoRes){ infoRes(null); infoRes=null; } },2500); });
+       await chCtrl.writeValue(new Uint8Array([0x07])); const i=await espera; if(i){ aparato.next=i.next; } }catch(e){}
+  let desde=ptrLeer(); if(desde>aparato.next) desde=0;
+  recibidos=[]; malos=0; rxIndex=0; rxDesde=desde; downloading=true; lastRx=Date.now();
+  say(desde>0?'Pidiendo registros nuevos…':'Pidiendo datos…');
+  try{ const b=new Uint8Array(5); b[0]=0x08; new DataView(b.buffer).setUint32(1,desde,true); await chCtrl.writeValue(b); }
+  catch(e){ downloading=false; say('Error al pedir datos: '+e.message); return; }
+  const iv=setInterval(async()=>{
+    if(Date.now()-lastRx<=2500) return;
+    clearInterval(iv);
+    // Si el aparato ya había sobrescrito los más antiguos, empieza más adelante: se recoloca por el final
+    const total=rxIndex, esperado=aparato.next-desde, sigue=conectado();
+    // Con la conexión aún abierta, recibir menos de lo esperado significa que el aparato ya había
+    // sobrescrito los más antiguos (memoria circular): lo recibido son los últimos 'total'.
+    if(sigue && total>0 && total<esperado){ const corr=aparato.next-total-desde; recibidos.forEach(r=>r.n+=corr); }
+    const ok=await histGuardar(aparato.key,recibidos);
+    if(ok) ptrGuardar(sigue?aparato.next:desde+total);          // cortada a medias: la próxima vez sigue donde se quedó
+    downloading=false;
+    history=await histCargar(aparato.key); if(!history.length) history=recibidos;
+    construirViajes(); leerBateria(); pedirEstado();
+    say((recibidos.length?'Descarga completa: '+recibidos.length+' registros nuevos'+(malos?' ('+malos+' dañados descartados)':'')+'. ':'No hay registros nuevos. ')+
+        'En el móvil: '+viajes.length+' viaje(s).');
+  },300);
+}
+async function borrar(){
+  if(!conectado()){ say('Conecta primero.'); return; }
+  if(estado&&estado.viaje){ say('Termina antes el viaje en marcha.'); return; }
+  if(!confirm('¿Borrar TODOS los datos del aparato? Lo ya descargado se conserva en el móvil.')) return;
+  try{ await chCtrl.writeValue(new Uint8Array([0x02])); ptrGuardar(0);
+    say(aparato.ext?'Borrando la memoria externa: puede tardar hasta 2 minutos. No desconectes.':'Memoria del aparato borrada.'); }
+  catch(e){ say('Error al borrar: '+e.message); }
+}
+
+// ================= Viajes =================
+function construirViajes(){
+  const H=[...history].sort((a,b)=>a.n-b.n);
+  viajes=[]; let cur=null;
+  for(const r of H){
+    if(r.tipo===3){ cur={ini:r,ini2:null,fin:null,ints:[],evs:[],als:[]}; viajes.push(cur); continue; }
+    if(r.tipo===6){ if(cur) cur.ini2=r; continue; }
+    if(r.tipo===7){ const u=viajes[viajes.length-1]; if(u&&!u.sello) u.sello=r; cur=null; continue; }
+    if(!cur){ cur={ini:null,fin:null,ints:[],evs:[],als:[]}; viajes.push(cur); }       // sin inicio (datos sobrescritos)
+    if(r.tipo===1) cur.ints.push(r); else if(r.tipo===2) cur.evs.push(r); else if(r.tipo===5) cur.als.push(r);
+    else if(r.tipo===4){ cur.fin=r; cur=null; }
+  }
+  viajes=viajes.filter(v=>v.ints.length||v.evs.length||v.fin||v.ini);
+  sel=viajes.length-1;
+  pintarViajes(); pintarViaje();
+}
+function hora(t,larga){
+  if(t<FECHA_VALIDA) return 'sin hora';
+  return new Date(t*1000).toLocaleString('es-ES',larga?{weekday:'short',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}:{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+function durTxt(s){ s=Math.round(s); const h=Math.floor(s/3600), m=Math.floor(s%3600/60); return h?h+' h '+String(m).padStart(2,'0')+' min':m+' min'; }
+function nivelViaje(v){
+  if(v.fin) return v.fin.nivel;
+  let n=0; v.ints.forEach(r=>n=Math.max(n,r.al&3)); v.als.forEach(a=>n=Math.max(n,a.nivel)); return n;
+}
+function perfilDe(v){ return v.ini?v.ini.perfil:255; }
+function pintarViajes(){
+  const box=$('viajes');
+  if(!viajes.length){ box.innerHTML='<div class="hint">Sin datos todavía.</div>'; return; }
+  box.innerHTML=viajes.map((v,i)=>{
+    const t0=(v.ini||v.ints[0]||v.evs[0]||v.fin).t, n=nivelViaje(v), A=analizar(v), p=perfilDe(v);
+    const col=n>=2?'#ef4444':(n===1?'#f59e0b':'#22c55e');
+    return '<div class="via'+(i===sel?' sel':'')+'" onclick="sel='+i+';pintarViajes();pintarViaje()"><span><span class="dot" style="background:'+col+'"></span>'+
+      hora(t0,true)+'</span><small>'+(PERFILES[p]?PERFILES[p].nom:'sin inicio')+(A.dur?' · '+durTxt(A.dur):'')+(v.fin?'':' · en curso')+'</small></div>';
+  }).reverse().join('');
+}
+
+// --- Clasificación de maniobras ---
+// e1 = eje X del aparato en el plano horizontal; e2 = a su izquierda. Con la flecha hacia delante:
+// hx < 0 frenada, hx > 0 acelerón, hy > 0 curva a la izquierda, hy < 0 a la derecha.
+// Sin flecha: la dirección de la marcha se deduce del eje en el que más se repiten las maniobras (sin sentido).
+function ejeMarcha(evs){
+  const M=evs.filter(e=>e.sub===1); if(M.length<3) return null;
+  let sxx=0,syy=0,sxy=0; M.forEach(e=>{ sxx+=e.hx*e.hx; syy+=e.hy*e.hy; sxy+=e.hx*e.hy; });
+  const ang=0.5*Math.atan2(2*sxy,sxx-syy); return [Math.cos(ang),Math.sin(ang)];
+}
+function clasificar(e,v,eje){
+  const thrM=(v.ini?v.ini.thrM:30)/100, frag=v.ini?(v.ini.op&3):1, flecha=v.ini&&(v.ini.op&4);
+  const g=e.pico/1000, gTxt=e.pico>=15500?'16 g o más (fuera de escala del sensor)':coma(g,1)+' g';
+  if(e.sub===1){
+    const fuerte=g>=1.5*thrM?'muy brusca':'brusca';
+    let lon=e.hx, lat=e.hy, txt;
+    if(!flecha&&eje){ lon=e.hx*eje[0]+e.hy*eje[1]; lat=-e.hx*eje[1]+e.hy*eje[0]; }
+    if(flecha||eje){
+      if(Math.abs(lon)>=1.2*Math.abs(lat)) txt=flecha?(lon<0?'Frenada':'Acelerón'):'Frenada o acelerón';
+      else if(Math.abs(lat)>=1.2*Math.abs(lon)) txt=flecha?('Curva a la '+(lat>0?'izquierda':'derecha')):'Curva';
+      else txt=flecha?(lon<0?'Frenada en curva':'Acelerón en curva'):'Maniobra combinada';
+    } else txt='Maniobra';
+    let tm='man';
+    if(flecha||eje){ if(Math.abs(lon)>=1.2*Math.abs(lat)) tm=flecha?(lon<0?'freno':'acel'):'long'; else if(Math.abs(lat)>=1.2*Math.abs(lon)) tm='curva'; else tm='comb'; }
+    return {txt:txt+' '+fuerte, det:coma(g,2)+' g durante '+coma(e.dur/1000,1)+' s', pts:g>=1.5*thrM?5:2, cls:'man', gr:g>=1.5*thrM?2:1, tm, muy:g>=1.5*thrM};
+  }
+  if(e.sub===2){ const f=g>=1.5*THR_B[frag]; return {txt:f?'Bache fuerte':'Bache',det:coma(g,1)+' g',pts:f?2:1,cls:'bache',gr:f?2:1}; }
+  if(e.sub===3) return {txt:'Golpe',det:gTxt+' (umbral '+coma(THR_G[frag],1)+' g)',pts:0,cls:'golpe',gr:2};
+  if(e.sub===4){ const h=0.5*9.81*Math.pow(e.dur/1000,2)*100;
+    return {txt:'Caída',det:'unos '+Math.round(h)+' cm ('+e.dur+' ms en el aire)'+(e.pico?' · impacto '+gTxt:' · sin impacto fuerte (lo cogieron)'),pts:0,cls:'golpe',gr:2}; }
+  if(e.sub===6) return {txt:'Caja abierta',det:'entra luz: '+e.pico+' lux',pts:0,cls:'luz',gr:2};
+  if(e.sub===7) return {txt:'Caja cerrada',det:'estuvo abierta '+(e.dur>=60?Math.floor(e.dur/60)+' min '+(e.dur%60)+' s':e.dur+' s')+' (máx. '+e.pico+' lux)',pts:0,cls:'luz',gr:1};
+  if(e.sub===5) return {txt:'Vuelco',det:'inclinado '+e.incl+'° respecto a la posición inicial',pts:0,cls:'vuelco',gr:2};
+  return {txt:'?',det:'',pts:0,cls:'',gr:0};
+}
+function analizar(v){
+  const todos=[v.ini,...v.ints,...v.evs,...v.als,v.fin].filter(Boolean).filter(r=>r.t>=FECHA_VALIDA);
+  let dur=0;
+  if(todos.length>=2){ const ts=todos.map(r=>r.t); dur=Math.max(...ts)-Math.min(...ts); }
+  else if(v.ints.length>1) dur=(v.ints.length-1)*60;
+  const eje=ejeMarcha(v.evs);
+  const C=v.evs.map(e=>clasificar(e,v,eje));
+  const pts=C.reduce((a,c)=>a+c.pts,0), horas=Math.max(dur/3600,0.25);
+  const punt=v.evs.length||dur?Math.max(0,Math.round(100-4*pts/horas)):null;
+  const T=v.ints.filter(r=>r.temp!==SIN_DATO).map(r=>r.temp);
+  const Hm=v.ints.filter(r=>r.hum!==undefined&&r.hum<=100).map(r=>r.hum);
+  const aper=v.evs.filter(e=>e.sub===6).length, abiertoS=v.evs.filter(e=>e.sub===7).reduce((a,e)=>a+e.dur,0);
+  return {dur,eje,C,punt,nMan:v.evs.filter(e=>e.sub===1).length,nGol:v.evs.filter(e=>e.sub>=3&&e.sub<=5).length,
+    tMin:T.length?Math.min(...T):null,tMax:T.length?Math.max(...T):null,tMed:T.length?T.reduce((a,b)=>a+b,0)/T.length:null,hMin:Hm.length?Math.min(...Hm):null,hMax:Hm.length?Math.max(...Hm):null,aper,abiertoS};
+}
+
+// --- Gráficas ---
+function mkChart(id,opts){ return new Chart($(id),{type:'line',data:{labels:[],datasets:[]},options:Object.assign({animation:false,responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},zoom:{pan:{enabled:true,mode:'x'},zoom:{pinch:{enabled:true},wheel:{enabled:true},mode:'x'}}},
+  scales:{x:{ticks:{color:'#94a3b8',maxTicksLimit:6},grid:{color:'#1e293b'}},y:{ticks:{color:'#94a3b8'},grid:{color:'#283548'}}}},opts||{})}); }
+const gTemp=mkChart('chTemp'), gVib=mkChart('chVib'), gHum=mkChart('chHum');
+const gGol=new Chart($('chGol'),{type:'bar',data:{labels:[],datasets:[]},options:{animation:false,responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},zoom:{pan:{enabled:true,mode:'x'},zoom:{pinch:{enabled:true},wheel:{enabled:true},mode:'x'}},
+    tooltip:{callbacks:{label:c=>c.dataset.type==='line'?c.dataset.label:(golInfo[c.dataIndex]||'')}}},
+  scales:{x:{ticks:{color:'#94a3b8',maxTicksLimit:8},grid:{color:'#1e293b'}},y:{beginAtZero:true,ticks:{color:'#94a3b8'},grid:{color:'#283548'},title:{display:true,text:'g',color:'#94a3b8'}}}}});
+let golInfo=[];
+function verTodo(){ [gTemp,gVib,gGol,gHum].forEach(g=>{ if(g.resetZoom) g.resetZoom(); }); }
+
+function pintarViaje(){
+  const v=viajes[sel];
+  if(!v){ $('detalle').style.display='none'; return; }
+  $('detalle').style.display='block';
+  const A=analizar(v), n=nivelViaje(v), p=perfilDe(v), ini=v.ini;
+  const el=$('dNivel'); el.className='estado n'+n;
+  el.textContent=(n===0?'Viaje sin alarmas':NIVEL[n])+(v.fin?'':' · viaje en curso o sin terminar');
+  if(p===255 || (p===0&&n===0)) { el.className='estado nx'; el.textContent=p===0?'Viaje sin alarmas (sin control de temperatura)':'Viaje sin registro de inicio (datos antiguos sobrescritos)'; }
+  const t0=(ini||v.ints[0]||v.evs[0]||v.fin).t, tf=v.fin?v.fin.t:(v.ints.length?v.ints[v.ints.length-1].t:t0);
+  const causas=v.fin?[...Array(8).keys()].filter(c=>c>0&&(v.fin.causas>>c)&1):[...new Set(v.als.filter(a=>a.nivel>0).map(a=>a.causa))];
+  const fueraMin=v.fin?v.fin.fueraMin:(v.als.length?Math.max(...v.als.map(a=>a.fuera10))/10:0);
+  const golpes=v.evs.filter(e=>e.sub>=3&&e.sub<=5), i2=v.ini2;
+  const causasH=v.fin?[8,9].filter(c=>(v.fin.causasX>>(c-8))&1):[...new Set(v.als.filter(a=>a.nivel>0&&a.causa>=8).map(a=>a.causa))];
+  $('dRes').innerHTML=
+    '<span class="k">Inicio:</span> <b>'+hora(t0,true)+'</b><br><span class="k">Fin:</span> <b>'+(v.fin?hora(tf,true):'—')+'</b>'+(A.dur?' · '+durTxt(A.dur):'')+'<br>'+
+    (ini&&p>0&&p<255?'<span class="k">Perfil:</span> '+PERFILES[p].nom+' · rango '+coma(ini.tMin/100)+' a '+coma(ini.tMax/100)+' °C · aviso tras '+ini.ret+' min · crítica &lt; '+coma(ini.cMin/100)+' o &gt; '+coma(ini.cMax/100)+' °C'+(ini.acu?' o '+ini.acu+' min fuera en total':'')+'<br>':'')+
+    (A.tMin!==null?'<span class="k">Temperatura:</span> mín. <b>'+grados(A.tMin)+'</b> · máx. <b>'+grados(A.tMax)+'</b> · media '+grados(Math.round(A.tMed))+(p>0&&p<255?' · fuera de rango <b>'+coma(fueraMin,fueraMin<10?1:0)+' min</b>':'')+'<br>':'<span class="k">Temperatura:</span> sin datos de la sonda<br>')+
+    (A.hMin!==null?'<span class="k">Humedad:</span> mín. <b>'+A.hMin+' %</b> · máx. <b>'+A.hMax+' %</b>'+(i2&&(i2.amb&2)?' · rango '+i2.humMin+' a '+i2.humMax+' % (aviso tras '+i2.humRet+' min)':' · sin vigilar')+'<br>':(i2&&(i2.amb&2)?'<span class="k">Humedad:</span> sin datos del sensor<br>':''))+
+    (i2&&(i2.amb&1)?'<span class="k">Apertura de la caja:</span> '+(A.aper?'<b style="color:#ef4444">abierta '+A.aper+(A.aper>1?' veces':' vez')+(A.abiertoS?' (en total '+durTxt(A.abiertoS)+')':'')+'</b>':'no se abrió durante el viaje')+'<br>':'')+
+    ((causas.length||causasH.length)?'<span class="k">Alarmas:</span> <b>'+[...causas,...causasH].map(c=>CAUSA[c]).join(' · ')+'</b><br>':'')+
+    '<span class="k">Paquete:</span> '+(golpes.length?'<b style="color:#f59e0b">'+golpes.length+' incidencia(s): '+
+      Object.entries(golpes.reduce((o,e)=>{ const t=['','','','golpe','caída','vuelco'][e.sub]; o[t]=(o[t]||0)+1; return o; },{})).map(([k,c])=>c+' '+k+(c>1?'s':'')).join(', ')+'</b>':'sin golpes, caídas ni vuelcos')+
+    ' · fragilidad '+(ini?FRAG[ini.op&3].toLowerCase():'—')+'<br>'+
+    '<span class="k">Orientación:</span> '+(ini&&(ini.op&4)?'flecha hacia delante (frenadas, acelerones y curvas por separado)':(A.eje?'dirección de la marcha deducida de las maniobras (no distingue frenada de acelerón)':'sin dirección de la marcha (pocas maniobras)'))+
+    (ini&&(ini.op&8)?'<br><b style="color:#f59e0b">Aviso: el aparato se movía al calibrar; la clasificación de eventos puede ser menos fiable.</b>':'');
+  pintarSello(v); pintarValoracion(v,A);
+  $('dPunt').textContent=A.punt===null?'—':A.punt; $('dMan').textContent=A.nMan; $('dGol').textContent=A.nGol;
+
+  // Temperatura con su rango
+  const I=v.ints, conHora=I.length&&I[0].t>=FECHA_VALIDA;
+  const lab=I.map((r,i)=>r.t>=FECHA_VALIDA?new Date(r.t*1000).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}):'#'+(i+1));
+  const T=I.map(r=>r.temp===SIN_DATO?null:r.temp/100);
+  const usaRango=ini&&p>0&&p<255;
+  const fuera=I.map(r=>usaRango&&r.temp!==SIN_DATO&&(r.temp>ini.tMax||r.temp<ini.tMin));
+  gTemp.data.labels=lab;
+  gTemp.data.datasets=[{data:T,borderColor:'#38bdf8',backgroundColor:'#38bdf8',borderWidth:2,tension:.2,spanGaps:false,
+      pointRadius:T.map((_,i)=>fuera[i]?3:(I.length<60?2:0)),pointBackgroundColor:T.map((_,i)=>fuera[i]?'#ef4444':'#38bdf8')}];
+  if(usaRango){
+    const linea=(val,col,dash)=>({data:I.map(()=>val/100),borderColor:col,borderWidth:1,borderDash:dash,pointRadius:0,fill:false});
+    gTemp.data.datasets.push(linea(ini.tMax,'#22c55e',[6,4]),linea(ini.tMin,'#22c55e',[6,4]),linea(ini.cMax,'#ef4444',[2,3]),linea(ini.cMin,'#ef4444',[2,3]));
+  }
+  gTemp.update();
+  // Humedad
+  const HU=I.map(r=>r.hum!==undefined&&r.hum<=100?r.hum:null), conH=HU.some(x=>x!==null), vigH=v.ini2&&(v.ini2.amb&2);
+  $('humBox').style.display=conH?'block':'none';
+  gHum.data.labels=lab;
+  const fueraH=HU.map(h=>vigH&&h!==null&&(h>v.ini2.humMax||h<v.ini2.humMin));
+  gHum.data.datasets=[{data:HU,borderColor:'#22d3ee',backgroundColor:'#22d3ee',borderWidth:2,tension:.2,
+    pointRadius:HU.map((_,i)=>fueraH[i]?3:(I.length<60?2:0)),pointBackgroundColor:HU.map((_,i)=>fueraH[i]?'#f59e0b':'#22d3ee')}];
+  if(vigH){ const lh=val=>({data:I.map(()=>val),borderColor:'#22c55e',borderWidth:1,borderDash:[6,4],pointRadius:0,fill:false});
+    gHum.data.datasets.push(lh(v.ini2.humMax),lh(v.ini2.humMin)); }
+  gHum.update();
+  // Vibración y eventos (cada evento se coloca en el intervalo en el que ocurrió, por número de registro)
+  gVib.data.labels=lab;
+  const vib=I.map(r=>r.vib/1000);
+  const idxDe=e=>{ let k=I.findIndex(r=>r.n>e.n); return k<0?I.length-1:k; };
+  const marca={1:['circle','#a78bfa'],2:['triangle','#f59e0b'],3:['rect','#ef4444'],4:['rect','#ef4444'],5:['crossRot','#ef4444']};
+  const sets=[{data:vib,borderColor:'#64748b',backgroundColor:'#64748b33',fill:true,borderWidth:1.5,pointRadius:0,tension:.2}];
+  [1,2,3,4,5].forEach(s=>{ const d=I.map(()=>null); v.evs.filter(e=>e.sub===s).forEach(e=>{ const k=idxDe(e); if(k>=0) d[k]=Math.max(d[k]||0,Math.min(e.pico/1000,vib.length?Math.max(0.05,...vib)*1.3:1)); });
+    sets.push({data:d,showLine:false,pointStyle:marca[s][0],pointRadius:6,pointBackgroundColor:marca[s][1],pointBorderColor:marca[s][1]}); });
+  gVib.data.datasets=sets; gVib.update();
+  // Golpes, caídas y baches con su fuerza real y los umbrales del paquete
+  const frag=ini?(ini.op&3):1, thrB=THR_B[frag], thrG=THR_G[frag];
+  const IMP=v.evs.map((e,i)=>({e,c:A.C[i]})).filter(x=>x.e.sub>=2&&x.e.sub<=4&&x.e.pico>0);
+  const colG={2:'#f59e0b',3:'#ef4444',4:'#b91c1c'};
+  gGol.data.labels=IMP.map((x,k)=>x.e.t>=FECHA_VALIDA?new Date(x.e.t*1000).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}):'#'+(k+1));
+  golInfo=IMP.map(x=>x.c.txt+': '+x.c.det);
+  const lineaG=(val,col,txt)=>({type:'line',label:txt,data:IMP.map(()=>val),borderColor:col,borderWidth:1.5,borderDash:[6,4],pointRadius:0,fill:false});
+  gGol.data.datasets=[{type:'bar',data:IMP.map(x=>x.e.pico/1000),backgroundColor:IMP.map(x=>colG[x.e.sub]),borderRadius:4,maxBarThickness:28},
+    lineaG(thrG,'#ef4444','Umbral de golpe '+coma(thrG,1)+' g ('+FRAG[frag].toLowerCase()+')'),lineaG(thrB,'#f59e0b','Umbral de bache '+coma(thrB,1)+' g')];
+  gGol.update();
+  $('golBox').style.display=IMP.length?'block':'none';
+  const alVuelo=v.evs.filter(e=>e.sub===4&&!e.pico).length, vuelcos=v.evs.filter(e=>e.sub===5).length;
+  if(IMP.length){
+    const mx=IMP.reduce((a,x)=>x.e.pico>a.e.pico?x:a,IMP[0]), sobre=IMP.filter(x=>x.e.pico/1000>=thrG).length;
+    $('golTxt').innerHTML='Mayor: <b>'+coma(mx.e.pico/1000,1)+' g</b> ('+mx.c.txt.toLowerCase()+', '+hora(mx.e.t)+'). '+
+      (sobre?'<b style="color:#ef4444">'+sobre+' pasa(n) del umbral de golpe del paquete.</b>':'Ninguno llega al umbral de golpe del paquete.')+
+      (alVuelo?' Además, '+alVuelo+' caída(s) sin impacto fuerte (lo cogieron).':'')+(vuelcos?' '+vuelcos+' vuelco(s).':'')+' Toca una barra para ver el detalle.';
+  } else $('golTxt').textContent='Sin golpes, caídas ni baches en este viaje.'+(alVuelo?' '+alVuelo+' caída(s) sin impacto fuerte.':'')+(vuelcos?' '+vuelcos+' vuelco(s).':'');
+  verTodo();
+
+  // Tablas
+  $('tAl').innerHTML=v.als.length?v.als.map(a=>'<tr><td>'+hora(a.t)+'</td><td>'+(a.nivel?'<b style="color:'+(a.nivel>=2?'#ef4444':'#f59e0b')+'">'+NIVEL[a.nivel]+'</b>: ':'')+
+    (a.nivel===0&&a.causa>0&&a.causa!==10?'Sale del rango: ':'')+CAUSA[a.causa].replace(/^./,c=>a.nivel===0&&a.causa>0&&a.causa!==10?c.toLowerCase():c)+'</td><td>'+(a.causa>=8?Math.round(a.temp/100)+' %':grados(a.temp))+'</td></tr>').join('')
+    :'<tr><td colspan="3">'+(p>0&&p<255?'Ninguna: la temperatura'+(v.ini2&&(v.ini2.amb&2)?' y la humedad no salieron':' no salió')+' del rango.':(v.ini2&&(v.ini2.amb&2)?'Ninguna: la humedad no salió del rango.':'Sin control de temperatura.'))+'</td></tr>';
+  $('tEv').innerHTML=v.evs.length?v.evs.map((e,i)=>{ const c=A.C[i], g=gpsCerca(e.t);
+    return '<tr><td>'+hora(e.t)+'</td><td'+(c.gr>=2?' style="color:#f59e0b;font-weight:700"':'')+'>'+c.txt+'</td><td>'+c.det+
+      (g?'<br>'+(g.v!==null&&g.v!==undefined?Math.round(g.v*3.6)+' km/h · ':'')+'<a href="https://maps.google.com/?q='+g.lat.toFixed(6)+','+g.lon.toFixed(6)+'" target="_blank" rel="noopener">ver en el mapa</a>':'')+'</td></tr>'; }).join('')
+    :'<tr><td colspan="3">Ningún evento: conducción suave y paquete sin golpes.</td></tr>';
+}
+
+// ================= CSV e informe =================
+function exportCSV(){
+  if(!viajes.length){ say('No hay datos que exportar.'); return; }
+  let csv='viaje,registro,tipo,unixTime,fecha,temp_C,vibracion_g,pico_g,evento,detalle,hx_g,hy_g,vertical_g,inclinacion_grados,alarma_nivel,alarma_causa,humedad_pct,caja_abierta\n';
+  const q=s=>'"'+String(s).replace(/"/g,'""')+'"';
+  viajes.forEach((v,k)=>{ const A=analizar(v); let ie=0;
+    [v.ini,...v.ints,...v.evs,...v.als,v.fin].filter(Boolean).sort((a,b)=>a.n-b.n).forEach(r=>{
+      if(r.tipo===6) return;
+      const f=r.t>=FECHA_VALIDA?new Date(r.t*1000).toISOString():'';
+      let fila=[k+1,r.n,['','intervalo','evento','inicio','fin','alarma'][r.tipo],r.t,f];
+      if(r.tipo===1) fila.push(r.temp===SIN_DATO?'':(r.temp/100).toFixed(2),(r.vib/1000).toFixed(3),(r.pico/1000).toFixed(3),'','','','','',r.incl,r.al&3,'',r.hum!==undefined&&r.hum<=100?r.hum:'',r.al&64?1:0);
+      else if(r.tipo===2){ const c=A.C[v.evs.indexOf(r)]; ie++; fila.push('','',r.sub>=6?'':(r.pico/1000).toFixed(3),q(c.txt),q(c.det),(r.hx/1000).toFixed(3),(r.hy/1000).toFixed(3),(r.vv/1000).toFixed(3),r.incl,'',''); }
+      else if(r.tipo===5) fila.push(r.causa>=8||r.temp===SIN_DATO?'':(r.temp/100).toFixed(2),'','','','','','','','',r.nivel,q(CAUSA[r.causa]),r.causa>=8?(r.temp/100).toFixed(1):'','');
+      else if(r.tipo===3) fila.push('','','',q('inicio '+(PERFILES[r.perfil]?PERFILES[r.perfil].nom:'')),q('rango '+r.tMin/100+' a '+r.tMax/100+' C'),'','','','','','');
+      else fila.push('','','',q('fin'),q('fuera de rango '+r.fueraMin+' min'),'','','','',r.nivel,'');
+      csv+=fila.join(',')+'\n';
+    });
+  });
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv'}));
+  a.download='NaiCarga_'+(aparato.nombre||'NAC').replace(/[^A-Za-z0-9_-]+/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
+}
+function informe(){
+  const v=viajes[sel]; if(!v){ say('Elige un viaje.'); return; }
+  const w=window.open('','_blank'); if(!w){ say('El navegador ha bloqueado la ventana del informe.'); return; }
+  const img=$('chTemp').toDataURL('image/png'), img2=$('chVib').toDataURL('image/png'), img3=$('chGol').toDataURL('image/png');
+  const css='body{font-family:system-ui,sans-serif;color:#111;max-width:760px;margin:20px auto;padding:0 16px}h1{font-size:1.3em}'+
+    'table{width:100%;border-collapse:collapse;font-size:.85em}td,th{border-bottom:1px solid #ccc;padding:5px;text-align:left}.k{color:#555}'+
+    '.e{padding:8px;border-radius:8px;font-weight:700;margin:8px 0}img{width:100%;background:#0f172a;border-radius:8px}';
+  const n=nivelViaje(v), col=['#dcfce7','#fef3c7','#fee2e2'][n]||'#eee';
+  w.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Informe de viaje</title><style>'+css+'</style></head><body>'+
+    '<h1>Informe de transporte — '+(aparato.nombre||'')+'</h1><div class="e" style="background:'+col+'">'+$('dNivel').textContent+'</div>'+
+    '<p>'+$('dRes').innerHTML+'</p><p><b>Puntuación de conducción:</b> '+$('dPunt').textContent+' / 100 · maniobras bruscas: '+$('dMan').textContent+' · golpes y caídas: '+$('dGol').textContent+'</p>'+
+    (VAL&&VAL.suficiente?'<p><b>Estilo de conducción:</b> '+VAL.estilo+(conductorDe(v)?' ('+esc(conductorDe(v))+')':'')+'. '+VAL.desc+' '+VAL.rasgos.map(r=>r.t).join(' · ')+'</p>':'')+
+    '<h3>Temperatura</h3><img src="'+img+'">'+($('humBox').style.display!=='none'?'<h3>Humedad</h3><img src="'+$('chHum').toDataURL('image/png')+'">':'')+'<h3>Vibración y eventos</h3><img src="'+img2+'">'+
+    ($('golBox').style.display!=='none'?'<h3>Golpes, caídas y baches</h3><img src="'+img3+'">':'')+'<p>'+$('golTxt').innerHTML.replace(' Toca una barra para ver el detalle.','')+'</p>'+
+    '<h3>Alarmas</h3><table><tr><th>Hora</th><th>Qué pasó</th><th>Valor</th></tr>'+$('tAl').innerHTML+'</table>'+
+    '<h3>Eventos</h3><table><tr><th>Hora</th><th>Evento</th><th>Detalle</th></tr>'+$('tEv').innerHTML+'</table>'+
+    '<p class="k" style="font-size:.8em">Generado por Nai Carga el '+new Date().toLocaleString('es-ES')+'. Registrador de fabricación propia, sin calibración certificada: los valores son orientativos.</p>'+
+    '<script>setTimeout(()=>print(),400)<\/script></body></html>');
+  w.document.close();
+}
+
+// ================= Valoración del conductor =================
+// Se calcula con las maniobras bruscas, los baches, la vibración y, si lo hay, el GPS del móvil.
+// Todo es relativo al umbral del vehículo elegido al iniciar el viaje (camión, furgoneta o coche).
+const ESTILOS={
+  delicado:{n:'Delicado',c:'#15803d',d:'Conducción muy suave: casi sin frenadas, acelerones ni curvas bruscas. Ideal para carga frágil.'},
+  cuidadoso:{n:'Cuidadoso',c:'#16a34a',d:'Conducción suave, con alguna maniobra brusca aislada.'},
+  normal:{n:'Normal',c:'#475569',d:'Conducción correcta, con maniobras bruscas ocasionales.'},
+  lento:{n:'Lento y cuidadoso',c:'#0e7490',d:'Ritmo pausado y conducción suave. La carga viaja bien, aunque el viaje puede alargarse.'},
+  brusco:{n:'Brusco',c:'#b45309',d:'Muchas maniobras bruscas: la carga sufre más de lo necesario.'},
+  nervioso:{n:'Nervioso',c:'#c2410c',d:'Conducción a tirones: frena y acelera a golpes, a menudo seguidos. Suele indicar prisa o poca anticipación.'},
+  rapido:{n:'Rápido',c:'#b91c1c',d:'Curvas, frenadas o baches tomados con fuerza: velocidad alta para este tipo de carga.'}
+};
+let VAL=null;
+function pct(arr,q){ const v=[...arr].sort((x,y)=>x-y); return v.length?v[Math.min(v.length-1,Math.floor(q*v.length))]:0; }
+function conductorDe(v){ try{ return (JSON.parse(localStorage.getItem(certClave(v))||'{}').con)||''; }catch(e){ return ''; } }
+function guardarConductor(){
+  const v=viajes[sel]; if(!v) return;
+  let d={}; try{ d=JSON.parse(localStorage.getItem(certClave(v))||'{}'); }catch(e){}
+  d.con=$('dCond').value.trim();
+  try{ localStorage.setItem(certClave(v),JSON.stringify(d)); }catch(e){}
+  pintarHistConductor(v);
+}
+function valorarConductor(v,A){
+  const h=A.dur/3600;
+  if(!v.ini||h<1/6) return {suficiente:false};
+  const thrM=v.ini.thrM/100, dirOK=!!(v.ini.op&4), dirAuto=!dirOK&&!!A.eje;
+  const X=v.evs.map((e,i)=>({e,c:A.C[i]}));
+  const man=X.filter(x=>x.e.sub===1), muy=man.filter(x=>x.c.muy);
+  const fr=man.filter(x=>x.c.tm==='freno'), ac=man.filter(x=>x.c.tm==='acel'), lg=man.filter(x=>x.c.tm==='long');
+  const cu=man.filter(x=>x.c.tm==='curva'||x.c.tm==='comb'), cuF=cu.filter(x=>x.c.muy);
+  const ba=X.filter(x=>x.e.sub===2), baF=ba.filter(x=>x.c.gr>=2);
+  const ph=n=>n/h, nota=x=>Math.max(0,Math.min(100,Math.round(x)));
+  const conT=man.filter(x=>x.e.t>=FECHA_VALIDA);
+  let rafagas=0; for(let i=0;i+2<conT.length;i++) if(conT[i+2].e.t-conT[i].e.t<=60){ rafagas++; i+=2; }
+  let alt=0; for(let i=1;i<conT.length;i++){ const a=conT[i-1].c.tm, b=conT[i].c.tm;
+    if(((a==='freno'&&b==='acel')||(a==='acel'&&b==='freno')||(a==='long'&&b==='long'))&&conT[i].e.t-conT[i-1].e.t<=30) alt++; }
+  const durMed=man.length?man.reduce((s,x)=>s+x.e.dur,0)/man.length/1000:0;
+  const vibs=v.ints.map(r=>r.vib).filter(x=>x!==undefined), vib=vibs.length?vibs.reduce((s,x)=>s+x,0)/vibs.length/1000:0;
+  // GPS del móvil durante el viaje (velocidad solo cuando se mueve)
+  const t0=v.ini.t, tf=v.fin?v.fin.t:(v.ints.length?v.ints[v.ints.length-1].t:t0);
+  const G=(t0>=FECHA_VALIDA?gpsHist.filter(g=>g.t>=t0&&g.t<=tf&&g.v!==null&&g.v!==undefined):[]).map(g=>g.v*3.6);
+  const mov=G.filter(x=>x>7), ritmo=mov.length>=20?{vmed:mov.reduce((s,x)=>s+x,0)/mov.length,vmax:Math.max(...mov),vp90:pct(mov,0.9)}:null;
+  // Notas por aspecto (100 = perfecto)
+  const asp=[['Suavidad general',nota(100-10*ph(man.length)-15*ph(muy.length))]];
+  if(dirOK){ asp.push(['Frenadas (anticipación)',nota(100-18*ph(fr.length)-12*ph(fr.filter(x=>x.c.muy).length))]);
+             asp.push(['Acelerones',nota(100-18*ph(ac.length)-12*ph(ac.filter(x=>x.c.muy).length))]); }
+  else if(dirAuto) asp.push(['Frenadas y acelerones',nota(100-15*ph(lg.length)-12*ph(lg.filter(x=>x.c.muy).length))]);
+  if(dirOK||dirAuto) asp.push(['Curvas y rotondas',nota(100-15*ph(cu.length)-15*ph(cuF.length))]);
+  asp.push(['Atención a los baches',nota(100-8*ph(ba.length)-20*ph(baF.length))]);
+  asp.push(['Constancia (sin tirones)',nota(100-25*ph(alt)-15*ph(rafagas))]);
+  // Estilo
+  const tMan=ph(man.length), nerv=ph(alt)>=1.5||ph(rafagas)>=1||(tMan>=5&&durMed<1.2);
+  const rap=ph(cuF.length)>=1||ph(baF.length)>=2||ph(muy.length)>=1.5||(ritmo&&(ritmo.vp90>=110||ritmo.vmed>=90));
+  let est = nerv&&rap?'rapido':nerv?'nervioso':rap?'rapido':tMan>=4?'brusco':
+            (tMan<0.5&&ph(baF.length)<0.5)?'delicado':(tMan<2&&ph(muy.length)<0.3)?'cuidadoso':'normal';
+  const lentoG=ritmo&&ritmo.vmed<35&&h>=0.5;
+  if(lentoG&&(est==='delicado'||est==='cuidadoso')) est='lento';
+  const E=ESTILOS[est];
+  // Rasgos
+  const R=[];
+  if(nerv&&rap) R.push({t:'También nervioso',m:1});
+  if(dirOK&&ph(fr.length)>=2) R.push({t:'Frena tarde',m:1});
+  if(dirOK&&ph(ac.length)>=2) R.push({t:'Acelera fuerte',m:1});
+  if((dirOK||dirAuto)&&ph(cu.length)>=2) R.push({t:'Curvas rápidas',m:1});
+  if(ph(baF.length)>=1) R.push({t:'No reduce en baches',m:1});
+  if(ph(rafagas)>=1) R.push({t:'Maniobras en ráfaga',m:1});
+  if(lentoG&&est!=='lento') R.push({t:'Ritmo lento',m:0});
+  if(dirOK&&fr.length===0&&h>=0.5) R.push({t:'Anticipa las frenadas',b:1});
+  if(dirOK&&ac.length===0&&h>=0.5) R.push({t:'Arranca suave',b:1});
+  if(man.length===0&&h>=0.5) R.push({t:'Sin maniobras bruscas',b:1});
+  if(vib>0&&vib<0.05&&ba.length===0) R.push({t:'Carretera tranquila',b:0});
+  // Consejos (los dos aspectos peores por debajo de 80)
+  const CONS={'Frenadas (anticipación)':'Deja más distancia con el vehículo de delante y anticipa las frenadas.','Acelerones':'Arranca y acelera de forma progresiva, sobre todo con la carga suelta.',
+    'Frenadas y acelerones':'Anticipa: frena y acelera de forma progresiva.','Curvas y rotondas':'Reduce la velocidad antes de entrar en curvas y rotondas, no dentro.',
+    'Atención a los baches':'Reduce en firmes irregulares y esquiva los baches cuando sea seguro.','Constancia (sin tirones)':'Mantén un ritmo constante: evita encadenar acelerón y frenazo.',
+    'Suavidad general':'Conduce como si llevaras un vaso lleno en el salpicadero.'};
+  const cons=asp.filter(a=>a[1]<80).sort((a,b)=>a[1]-b[1]).slice(0,2).map(a=>CONS[a[0]]);
+  return {suficiente:true,clave:est,estilo:E.n,color:E.c,desc:E.d,rasgos:R,asp,ritmo,cons,h,dirOK,dirAuto,nMan:man.length};
+}
+function pintarValoracion(v,A){
+  VAL=valorarConductor(v,A);
+  $('dCond').value=conductorDe(v);
+  const el=$('valEstilo');
+  if(!VAL.suficiente){
+    el.style.background='#334155'; el.textContent='Sin valorar';
+    $('valDesc').textContent=v.ini?'Viaje demasiado corto (menos de 10 minutos con hora).':'Viaje sin registro de inicio.';
+    ['valChips','valBarras','valRitmo','valCons'].forEach(id=>$(id).innerHTML=''); pintarHistConductor(v); return;
+  }
+  el.style.background=VAL.color; el.textContent=VAL.estilo;
+  $('valDesc').textContent=VAL.desc;
+  $('valChips').innerHTML=VAL.rasgos.map(r=>'<span class="chip'+(r.m?' m':r.b?' b':'')+'">'+r.t+'</span>').join('');
+  const col=x=>x>=80?'#22c55e':x>=55?'#f59e0b':'#ef4444';
+  $('valBarras').innerHTML=VAL.asp.map(([n,x])=>'<div class="asp"><span>'+n+'</span><div class="bar"><div style="width:'+x+'%;background:'+col(x)+'"></div></div><b>'+x+'</b></div>').join('');
+  $('valRitmo').textContent=VAL.ritmo?'Ritmo (GPS del móvil): media '+Math.round(VAL.ritmo.vmed)+' km/h en marcha · punta '+Math.round(VAL.ritmo.vmax)+' km/h.'
+    :'Sin GPS en este viaje: el ritmo (rápido o lento) se deduce solo de curvas y baches.'+(VAL.dirOK||VAL.dirAuto?'':' Sin dirección de la marcha: con la flecha del aparato hacia delante se valoran frenadas, acelerones y curvas por separado.');
+  $('valCons').innerHTML=VAL.cons.length?'<span class="k">Para mejorar:</span><br>'+VAL.cons.map(c=>'• '+c).join('<br>'):'<span class="k">Nada que corregir en este viaje.</span>';
+  pintarHistConductor(v);
+}
+function pintarHistConductor(v){
+  const nom=conductorDe(v);
+  if(!nom){ $('valHist').textContent='Escribe el nombre del conductor para ir guardando su historial con este aparato.'; return; }
+  const suyos=viajes.filter(w=>conductorDe(w).toLowerCase()===nom.toLowerCase());
+  const vals=suyos.map(w=>{ const a=analizar(w); return {p:a.punt,val:valorarConductor(w,a)}; }).filter(x=>x.val.suficiente);
+  if(vals.length<2){ $('valHist').textContent=nom+': primer viaje valorado con este aparato.'; return; }
+  const med=Math.round(vals.reduce((s,x)=>s+(x.p||0),0)/vals.length);
+  const cnt={}; vals.forEach(x=>cnt[x.val.estilo]=(cnt[x.val.estilo]||0)+1);
+  const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0];
+  $('valHist').textContent=nom+': '+vals.length+' viajes valorados · puntuación media '+med+'/100 · estilo más habitual: '+top[0].toLowerCase()+' ('+top[1]+' de '+vals.length+').';
+}
+
+// ================= Sello, certificado y verificación =================
+const macTxt=h=>h?h.toUpperCase().match(/.{1,4}/g).join('-'):'';
+function registrosSellados(v){
+  if(!v.sello) return null;
+  const a=v.sello.n-v.sello.nRegs, b=v.sello.n;
+  const R=history.filter(r=>r.n>=a&&r.n<b).sort((x,y)=>x.n-y.n);
+  return {a,b,R,completo:R.length===v.sello.nRegs&&R.every(r=>r.raw)};
+}
+function pintarSello(v){
+  const el=$('dSello');
+  if(!v.sello){ el.innerHTML='<span class="k">Sello:</span> '+(v.fin?'sin sello (firmware anterior a V1.4)':'el viaje aún no ha terminado'); $('selloBtns').style.display='none'; return; }
+  const S=registrosSellados(v);
+  el.innerHTML='<span class="k">Sello del aparato:</span> <b>'+macTxt(v.sello.mac)+'</b> · '+v.sello.nRegs+' registros'+
+    (S.completo?'':' · <b style="color:#f59e0b">faltan registros en el móvil: descarga de nuevo para poder exportar los datos sellados</b>');
+  $('selloBtns').style.display='flex';
+}
+function exportarSellado(){
+  const v=viajes[sel]; if(!v||!v.sello){ say('Este viaje no tiene sello.'); return; }
+  const S=registrosSellados(v); if(!S.completo){ say('Faltan registros de este viaje en el móvil.'); return; }
+  const dat={formato:'nai-carga-sellado-1',aparato:{id:aparato.key,serie:aparato.serie,nombre:aparato.nombre},
+    sello:{n:v.sello.n,nRegs:v.sello.nRegs,mac:v.sello.mac,raw:v.sello.raw},registros:S.R.map(r=>r.raw),
+    exportado:new Date().toISOString()};
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(dat)],{type:'application/json'}));
+  a.download='NaiCarga_sellado_'+(aparato.serie||'NAC')+'_'+v.sello.n+'.json'; a.click();
+  say('Archivo de datos sellados guardado. Envíalo junto al certificado si el cliente o la aseguradora quieren verificarlo.');
+}
+let verifRes=null;
+function verifDato(v){
+  if(verifRes){ verifRes({res:v.getUint8(4),n:v.getUint8(5)|(v.getUint8(6)<<8)|(v.getUint8(7)<<16)}); verifRes=null; }
+}
+async function verificarConAparato(){
+  const v=viajes[sel]; if(!v||!v.sello){ say('Este viaje no tiene sello.'); return; }
+  if(!conectado()){ say('Conecta el aparato que grabó este viaje.'); return; }
+  const b=new Uint8Array(5); b[0]=0x13; new DataView(b.buffer).setUint32(1,v.sello.n,true);
+  const espera=new Promise(r=>{ verifRes=r; setTimeout(()=>{ if(verifRes){ verifRes(null); verifRes=null; } },8000); });
+  try{ await chCtrl.writeValue(b); }catch(e){ say('No se pudo pedir la verificación: '+e.message); return; }
+  say('Verificando en el aparato…');
+  const r=await espera;
+  if(!r) say('El aparato no responde a la verificación (hace falta el firmware V1.4).');
+  else say(['✗ El sello NO coincide: los datos del aparato no son los que se sellaron.','✓ Sello correcto: los datos guardados en el aparato coinciden con el sello.',
+    'Los registros de este viaje ya no están en la memoria del aparato (se han sobrescrito o borrado).','Ese registro no es un sello en este aparato: ¿es el aparato correcto?'][r.res]||'Respuesta desconocida.');
+}
+// Verificación por el fabricante: HMAC-SHA256 con la clave derivada de la frase maestra y el número de serie
+const hexBytes=h=>new Uint8Array(h.match(/../g).map(x=>parseInt(x,16)));
+let historyGuardado=null;
+async function verificarFabricante(){
+  const f=$('vArch').files[0], frase=$('vClave').value;
+  if(!f||!frase){ $('vRes').textContent='Elige el archivo y escribe la frase.'; return; }
+  if(!window.crypto||!crypto.subtle){ $('vRes').textContent='Este navegador no permite la verificación (hace falta una página https).'; return; }
+  let d; try{ d=JSON.parse(await f.text()); }catch(e){ $('vRes').textContent='El archivo no es válido.'; return; }
+  if(d.formato!=='nai-carga-sellado-1'||!d.sello||!Array.isArray(d.registros)){ $('vRes').textContent='No es un archivo de datos sellados de Nai Carga.'; return; }
+  const id=parseInt(d.aparato.id,16), idb=new Uint8Array(4); new DataView(idb.buffer).setUint32(0,id,true);
+  const fb=new TextEncoder().encode(frase), km=new Uint8Array(fb.length+4); km.set(fb); km.set(idb,fb.length);
+  const clave=await crypto.subtle.digest('SHA-256',km);
+  const k=await crypto.subtle.importKey('raw',clave,{name:'HMAC',hash:'SHA-256'},false,['sign']);
+  const datos=new Uint8Array(d.registros.length*20); d.registros.forEach((h,i)=>datos.set(hexBytes(h),i*20));
+  const mac=new Uint8Array(await crypto.subtle.sign('HMAC',k,datos)).slice(0,10);
+  const macH=[...mac].map(x=>x.toString(16).padStart(2,'0')).join('');
+  const ok=macH===d.sello.mac && d.registros.length===d.sello.nRegs;
+  // Muestra el viaje del archivo (sin mezclarlo con el historial del aparato)
+  const regs=[...d.registros,d.sello.raw].map((h,i)=>decodificar(new DataView(hexBytes(h).buffer),d.sello.n-d.sello.nRegs+i)).filter(Boolean);
+  if(!historyGuardado) historyGuardado=history;
+  history=regs; construirViajes();
+  const b=$('verifBanner'); b.style.display='block'; b.className='estado '+(ok?'n0':'n2');
+  b.innerHTML=(ok?'✓ DATOS AUTÉNTICOS: el archivo coincide con el sello del aparato '+d.aparato.serie+'.':'✗ DATOS NO AUTÉNTICOS: el archivo ha sido modificado o la frase no es la correcta.')+
+    ' Mostrando el viaje del archivo. <button class="mini" onclick="salirVerif()">Volver a mis viajes</button>';
+  $('vRes').textContent=ok?'Correcto. El viaje del archivo se muestra arriba: compáralo con el certificado recibido.':'No coincide.';
+  $('vClave').value=''; b.scrollIntoView({behavior:'smooth'});
+}
+function salirVerif(){ if(historyGuardado){ history=historyGuardado; historyGuardado=null; } $('verifBanner').style.display='none'; construirViajes(); }
+
+// --- Empresa ---
+let empresa={nom:'',cif:'',con:'',dir:'',logo:''};
+try{ const g=JSON.parse(localStorage.getItem('nac_empresa')||'null'); if(g) empresa=Object.assign(empresa,g); }catch(e){}
+function pintarEmpresa(){ $('eNom').value=empresa.nom; $('eCif').value=empresa.cif; $('eCon').value=empresa.con; $('eDir').value=empresa.dir;
+  $('eLogoPrev').style.display=empresa.logo?'block':'none'; if(empresa.logo) $('eLogoPrev').src=empresa.logo; }
+function guardarEmpresa(){ empresa.nom=$('eNom').value; empresa.cif=$('eCif').value; empresa.con=$('eCon').value; empresa.dir=$('eDir').value;
+  try{ localStorage.setItem('nac_empresa',JSON.stringify(empresa)); }catch(e){ say('No se pudo guardar (¿logo demasiado grande?).'); } }
+function cargarLogo(inp){
+  const f=inp.files[0]; if(!f) return;
+  const img=new Image(), rd=new FileReader();
+  rd.onload=()=>{ img.onload=()=>{ const c=document.createElement('canvas'), k=Math.min(1,400/img.width,160/img.height);
+    c.width=Math.round(img.width*k); c.height=Math.round(img.height*k); c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    empresa.logo=c.toDataURL('image/png'); guardarEmpresa(); pintarEmpresa(); }; img.src=rd.result; };
+  rd.readAsDataURL(f);
+}
+function quitarLogo(){ empresa.logo=''; guardarEmpresa(); pintarEmpresa(); }
+pintarEmpresa();
+
+// --- Certificado para el cliente ---
+const CERT_CAMPOS=[['cCli','cli'],['cRef','ref'],['cOri','ori'],['cDes','des'],['cMer','mer'],['cCon','con'],['cObs','obs']];
+function certClave(v){ return 'nac_cert_'+(aparato.key||'_')+'_'+((v.ini||v.ints[0]||{n:0}).n); }
+function abrirCert(){
+  const v=viajes[sel]; if(!v){ say('Elige un viaje.'); return; }
+  let d={}; try{ d=JSON.parse(localStorage.getItem(certClave(v))||'{}'); }catch(e){}
+  CERT_CAMPOS.forEach(([id,k])=>$(id).value=d[k]||''); $('cPunt').checked=!!d.punt;
+  if(!$('cCon').value&&conductorDe(v)) $('cCon').value=conductorDe(v);
+  $('certForm').style.display='block'; $('certForm').scrollIntoView({behavior:'smooth'});
+}
+const esc=t=>String(t||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function generarCert(){
+  const v=viajes[sel]; if(!v) return;
+  const d={}; CERT_CAMPOS.forEach(([id,k])=>d[k]=$(id).value.trim()); d.punt=$('cPunt').checked;
+  if(!d.con&&conductorDe(v)) d.con=conductorDe(v);
+  try{ localStorage.setItem(certClave(v),JSON.stringify(d)); }catch(e){}
+  const w=window.open('','_blank'); if(!w){ say('El navegador ha bloqueado la ventana del certificado.'); return; }
+  $('certForm').style.display='none';
+  const A=analizar(v), n=nivelViaje(v), ini=v.ini, i2=v.ini2, p=perfilDe(v), frag=ini?(ini.op&3):1;
+  const t0=(ini||v.ints[0]||v.evs[0]||v.fin).t, tf=v.fin?v.fin.t:t0;
+  // Incidencias
+  const inc=[];
+  const golpes=v.evs.filter(e=>e.sub===3), caidas=v.evs.filter(e=>e.sub===4), vuelcos=v.evs.filter(e=>e.sub===5), aper=v.evs.filter(e=>e.sub===6);
+  const causasT=v.fin?[...Array(8).keys()].filter(c=>c>0&&(v.fin.causas>>c)&1):[...new Set(v.als.filter(a=>a.nivel>0&&a.causa<8).map(a=>a.causa))];
+  const causasH=v.fin?[8,9].filter(c=>(v.fin.causasX>>(c-8))&1):[...new Set(v.als.filter(a=>a.nivel>0&&a.causa>=8).map(a=>a.causa))];
+  causasT.forEach(c=>inc.push('Temperatura: '+CAUSA[c].toLowerCase()+'.'));
+  causasH.forEach(c=>inc.push(CAUSA[c]+'.'));
+  if(golpes.length){ const mx=Math.max(...golpes.map(e=>e.pico)); inc.push(golpes.length+' golpe'+(golpes.length>1?'s':'')+' por encima de '+coma(THR_G[frag],1)+' g (el mayor, '+(mx>=15500?'16 g o más':coma(mx/1000,1)+' g')+').'); }
+  caidas.forEach(e=>inc.push('Caída de unos '+Math.round(0.5*9.81*Math.pow(e.dur/1000,2)*100)+' cm a las '+hora(e.t)+'.'));
+  if(vuelcos.length) inc.push('Paquete volcado '+vuelcos.length+(vuelcos.length>1?' veces':' vez')+'.');
+  if(aper.length) inc.push('Caja abierta '+aper.length+(aper.length>1?' veces':' vez')+' durante el viaje ('+aper.map(e=>hora(e.t)).join(', ')+').');
+  const conforme=inc.length===0;
+  const nCert=(aparato.serie||'NAC')+'-'+String((ini||{n:0}).n).padStart(6,'0');
+  const fila=(k,val)=>val?'<tr><th>'+k+'</th><td>'+val+'</td></tr>':'';
+  const img=id=>$(id).toDataURL('image/png');
+  const evsCert=v.evs.map((e,i)=>({e,c:A.C[i]})).filter(x=>x.e.sub>=3||(x.e.sub===2&&x.c.gr>=2)||(d.punt&&x.e.sub===1));
+  const css='body{font-family:system-ui,Arial,sans-serif;color:#111;max-width:780px;margin:18px auto;padding:0 18px;font-size:13px}'+
+    '.cab{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #0ea5e9;padding-bottom:10px}.cab img{max-height:64px;max-width:240px}'+
+    '.emp{text-align:right;font-size:12px;color:#333}h1{font-size:18px;margin:16px 0 4px;letter-spacing:.5px}.sub{color:#555;margin-bottom:12px}'+
+    'table{width:100%;border-collapse:collapse;margin:6px 0 12px}th,td{text-align:left;padding:5px 6px;border-bottom:1px solid #ddd;vertical-align:top}th{width:32%;color:#444;font-weight:600}'+
+    '.ver{padding:12px;border-radius:8px;font-size:16px;font-weight:800;margin:10px 0}.ok{background:#dcfce7;color:#14532d;border:2px solid #22c55e}.ko{background:#fee2e2;color:#7f1d1d;border:2px solid #ef4444}'+
+    'h3{font-size:14px;margin:16px 0 6px;border-bottom:1px solid #ccc;padding-bottom:3px}img.g{width:100%;background:#0f172a;border-radius:6px;margin:4px 0}'+
+    '.sello{border:1px dashed #0ea5e9;border-radius:8px;padding:10px;margin:14px 0;font-size:12px}.sello b{font-family:monospace;font-size:14px;letter-spacing:1px}'+
+    '.firmas{display:flex;gap:16px;margin-top:20px}.firma{flex:1;border:1px solid #999;border-radius:8px;padding:10px;min-height:120px;font-size:12px}.firma p{margin:6px 0}'+
+    '.pie{font-size:10px;color:#666;margin-top:16px}@media print{body{margin:0 auto}h3{break-after:avoid}.firmas,.sello{break-inside:avoid}}';
+  const html='<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Certificado '+esc(nCert)+'</title><style>'+css+'</style></head><body>'+
+    '<div class="cab"><div>'+(empresa.logo?'<img src="'+empresa.logo+'">':'<b style="font-size:18px">'+esc(empresa.nom||'')+'</b>')+'</div>'+
+    '<div class="emp"><b>'+esc(empresa.nom)+'</b><br>'+(empresa.cif?'CIF/NIF '+esc(empresa.cif)+'<br>':'')+esc(empresa.con)+(empresa.dir?'<br>'+esc(empresa.dir):'')+'</div></div>'+
+    '<h1>CERTIFICADO DE CONDICIONES DE TRANSPORTE</h1><div class="sub">Nº '+esc(nCert)+' · emitido el '+new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'})+'</div>'+
+    '<table>'+fila('Cliente',esc(d.cli))+fila('Referencia / albarán',esc(d.ref))+fila('Mercancía',esc(d.mer))+fila('Origen',esc(d.ori))+fila('Destino',esc(d.des))+
+      fila('Conductor / vehículo',esc(d.con))+fila('Inicio del registro',hora(t0,true))+fila('Fin del registro',v.fin?hora(tf,true):'viaje sin terminar')+
+      fila('Duración',A.dur?durTxt(A.dur):'')+fila('Registrador',esc(aparato.serie)+(aparato.nombre&&aparato.nombre!==aparato.serie?' ('+esc(aparato.nombre)+')':''))+'</table>'+
+    '<div class="ver '+(conforme?'ok':'ko')+'">'+(conforme?'✓ CONFORME: el envío viajó dentro de las condiciones vigiladas.':'⚠ CON INCIDENCIAS')+'</div>'+
+    (conforme?'':'<ul>'+inc.map(x=>'<li>'+x+'</li>').join('')+'</ul>')+
+    '<h3>Condiciones vigiladas y medidas</h3><table>'+
+      fila('Temperatura',(A.tMin!==null?'mín. '+grados(A.tMin)+' · máx. '+grados(A.tMax)+' · media '+grados(Math.round(A.tMed)):'sin datos')+(ini&&p>0&&p<255?'<br><span style="color:#555">Rango exigido '+coma(ini.tMin/100)+' a '+coma(ini.tMax/100)+' °C ('+PERFILES[p].nom.toLowerCase()+')</span>':''))+
+      fila('Humedad',A.hMin!==null?'mín. '+A.hMin+' % · máx. '+A.hMax+' %'+(i2&&(i2.amb&2)?'<br><span style="color:#555">Rango exigido '+i2.humMin+' a '+i2.humMax+' %</span>':''):'')+
+      fila('Golpes y caídas',((golpes.length+caidas.length)?(golpes.length+caidas.length)+' por encima del umbral':'ninguno por encima del umbral')+'<br><span style="color:#555">Paquete '+FRAG[frag].toLowerCase()+': golpe a partir de '+coma(THR_G[frag],1)+' g</span>')+
+      fila('Vuelcos',vuelcos.length?vuelcos.length:'ninguno')+
+      fila('Apertura de la caja',i2&&(i2.amb&1)?(aper.length?aper.length+(aper.length>1?' veces':' vez'):'no se abrió'):'')+
+      (d.punt?fila('Conducción',A.punt+' / 100 · '+A.nMan+' maniobras bruscas'+(VAL&&VAL.suficiente?'<br>Estilo: <b>'+VAL.estilo+'</b> — '+VAL.desc:'')):'')+'</table>'+
+    '<h3>Temperatura</h3><img class="g" src="'+img('chTemp')+'">'+
+    ($('humBox').style.display!=='none'?'<h3>Humedad</h3><img class="g" src="'+img('chHum')+'">':'')+
+    ($('golBox').style.display!=='none'?'<h3>Golpes, caídas y baches</h3><img class="g" src="'+img('chGol')+'">':'')+
+    (evsCert.length?'<h3>Detalle de incidencias</h3><table><tr><th>Hora</th><th>Qué</th><th>Detalle</th></tr>'+
+      evsCert.map(x=>'<tr><td>'+hora(x.e.t)+'</td><td>'+x.c.txt+'</td><td>'+x.c.det+'</td></tr>').join('')+'</table>':'')+
+    (v.als.length?'<h3>Alarmas de temperatura y humedad</h3><table><tr><th>Hora</th><th>Qué pasó</th><th>Valor</th></tr>'+$('tAl').innerHTML+'</table>':'')+
+    (d.obs?'<h3>Observaciones</h3><p>'+esc(d.obs)+'</p>':'')+
+    '<div class="sello">'+(v.sello?'Sello electrónico del registrador: <b>'+macTxt(v.sello.mac)+'</b><br>Cubre los '+v.sello.nRegs+' registros del viaje. '+
+      'Si se modifica un solo dato, el sello deja de coincidir. Se puede verificar con el propio registrador o enviando al fabricante el archivo de datos sellados del viaje.'
+      :'Este viaje no tiene sello electrónico (registro sin terminar o firmware anterior).')+'</div>'+
+    '<div class="firmas"><div class="firma"><b>Entregado por (transportista)</b><p>Nombre:</p><p>DNI:</p><p>Fecha:</p><p>Firma:</p></div>'+
+    '<div class="firma"><b>Recibido por (destinatario)</b><p>Nombre:</p><p>DNI:</p><p>Fecha:</p><p>☐ Conforme &nbsp; ☐ Con reservas</p><p>Firma:</p></div></div>'+
+    '<div class="pie">Datos registrados automáticamente por el aparato '+esc(aparato.serie)+' (Nai Carga). Registrador de fabricación propia, sin calibración certificada: las medidas son orientativas y no sustituyen a un registrador homologado cuando la normativa lo exija.</div>'+
+    '<script>setTimeout(()=>print(),500)<\/script></body></html>';
+  w.document.write(html); w.document.close();
+}
+
+// Al abrir: el último aparato usado
+try{ const u=JSON.parse(localStorage.getItem('nac_ultimo')||'null'); if(u&&u.key) fijarAparato(u.key,u.serie,null); }catch(e){}
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+</script>
+</body>
+</html>
